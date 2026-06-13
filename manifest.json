@@ -1,0 +1,20 @@
+{
+  "name": "Facturas Pro",
+  "short_name": "Facturas",
+  "description": "Presupuestos y facturas para autónomos",
+  "start_url": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#F9FAFB",
+  "theme_color": "#4F46E5",
+  "lang": "es",
+  "icons": [
+    {
+      "src": "icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["finance", "productivity", "business"]
+}
