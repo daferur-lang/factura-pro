@@ -1,6 +1,6 @@
 'use strict';
 
-const STRIPE_LINK = 'https://buy.stripe.com/TU_LINK_AQUI'; // Reemplaza con tu Stripe Payment Link
+const STRIPE_LINK = 'https://buy.stripe.com/6oU4gz0nU5uu1DW5Aq8Vi07';
 
 const S = { PROFILE:'fp_profile', DOCS:'fp_docs', COUNTERS:'fp_counters', PLAN:'fp_plan' };
 const FREE_LIMIT = 1;
@@ -417,6 +417,6 @@ function bindEvents() {
 }
 
 document.addEventListener('DOMContentLoaded',()=>{
-  if('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(()=>{});
+  if('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(()=>{});  
   bindEvents(); initOnboarding();
 });
