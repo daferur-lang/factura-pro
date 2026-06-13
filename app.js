@@ -1,7 +1,9 @@
 'use strict';
 
+const STRIPE_LINK = 'https://buy.stripe.com/TU_LINK_AQUI'; // Reemplaza con tu Stripe Payment Link
+
 const S = { PROFILE:'fp_profile', DOCS:'fp_docs', COUNTERS:'fp_counters', PLAN:'fp_plan' };
-const FREE_LIMIT = 3;
+const FREE_LIMIT = 1;
 const ESTADOS = {
   borrador:  { label:'Borrador',  cls:'badge-borrador' },
   enviado:   { label:'Enviado',   cls:'badge-enviado' },
@@ -406,8 +408,7 @@ function bindEvents() {
   document.getElementById('docForm').addEventListener('submit',submitForm);
   document.getElementById('saveSettingsBtn').addEventListener('click',saveSettings);
   document.getElementById('upgradePay').addEventListener('click',()=>{
-    const plan=loadPlan(); plan.pro=true; save(S.PLAN,plan);
-    hideOverlay('mUpgrade'); showToast('¡Plan Pro activado! ⚡'); renderSettings();
+    window.open(STRIPE_LINK, '_blank');
   });
   document.getElementById('upgradeClose').addEventListener('click',()=>hideOverlay('mUpgrade'));
   document.getElementById('mConfirmNo').addEventListener('click',()=>hideOverlay('mConfirm'));
