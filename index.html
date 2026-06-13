@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es" data-theme="light">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -11,6 +11,7 @@
   <title>Facturas Pro</title>
   <link rel="manifest" href="manifest.json">
   <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -29,11 +30,11 @@
     <h1>Facturas Pro</h1>
     <p>Crea presupuestos y facturas en segundos. Empieza configurando tus datos.</p>
     <form id="obForm">
-      <input class="inp" type="text" id="ob-nombre" placeholder="Tu nombre o empresa *" required autocomplete="organization">
-      <input class="inp" type="text" id="ob-nif" placeholder="NIF / CIF *" required>
-      <input class="inp" type="email" id="ob-email" placeholder="Email de contacto">
-      <input class="inp" type="tel" id="ob-tel" placeholder="Teléfono">
-      <button class="btn-primary w100" type="submit">Empezar →</button>
+      <input type="text" id="ob-nombre" placeholder="Tu nombre o empresa *" required autocomplete="organization">
+      <input type="text" id="ob-nif" placeholder="NIF / CIF *" required>
+      <input type="email" id="ob-email" placeholder="Email de contacto">
+      <input type="tel" id="ob-tel" placeholder="Teléfono">
+      <button type="submit">Empezar →</button>
     </form>
   </div>
 </div>
@@ -82,24 +83,26 @@
     <div class="view" id="vForm">
       <div class="scroll-area">
         <form id="docForm" novalidate>
-          <div class="card">
-            <h3 class="card-title">Cliente</h3>
-            <input class="inp" type="text" id="f-cNombre" placeholder="Nombre / Empresa *" required>
-            <input class="inp" type="text" id="f-cNif" placeholder="NIF / CIF">
-            <input class="inp" type="email" id="f-cEmail" placeholder="Email del cliente">
-            <textarea class="inp" id="f-cDir" placeholder="Dirección" rows="2"></textarea>
-          </div>
-          <div class="card">
-            <div class="card-title-row">
-              <h3 class="card-title">Conceptos</h3>
+          <article>
+            <header><strong>Cliente</strong></header>
+            <input type="text" id="f-cNombre" placeholder="Nombre / Empresa *" required>
+            <input type="text" id="f-cNif" placeholder="NIF / CIF">
+            <input type="email" id="f-cEmail" placeholder="Email del cliente">
+            <textarea id="f-cDir" placeholder="Dirección" rows="2"></textarea>
+          </article>
+
+          <article>
+            <header>
+              <strong>Conceptos</strong>
               <button type="button" class="btn-add" id="addLineBtn">+ Línea</button>
-            </div>
+            </header>
             <div id="linesWrap"></div>
-          </div>
-          <div class="card">
+          </article>
+
+          <article>
             <div class="iva-row">
               <span class="iva-label">IVA</span>
-              <div class="iva-group" id="ivaPills">
+              <div class="iva-group">
                 <button type="button" class="iva-btn" data-v="0">0%</button>
                 <button type="button" class="iva-btn active" data-v="21">21%</button>
                 <button type="button" class="iva-btn" data-v="10">10%</button>
@@ -110,23 +113,24 @@
               <div class="total-row"><span id="tIvaLabel">IVA (21%)</span><b id="tIva">0,00 €</b></div>
               <div class="total-row final"><span>TOTAL</span><b id="tTotal">0,00 €</b></div>
             </div>
-          </div>
-          <div class="card">
+          </article>
+
+          <article>
             <div class="dates-row">
               <div class="date-col">
-                <label class="lbl">Fecha</label>
-                <input class="inp" type="date" id="f-fecha">
+                <label>Fecha <input type="date" id="f-fecha"></label>
               </div>
               <div class="date-col">
-                <label class="lbl">Vencimiento</label>
-                <input class="inp" type="date" id="f-vence">
+                <label>Vencimiento <input type="date" id="f-vence"></label>
               </div>
             </div>
-          </div>
-          <div class="card">
-            <textarea class="inp" id="f-notas" placeholder="Notas opcionales…" rows="3"></textarea>
-          </div>
-          <button type="submit" class="btn-primary w100" id="submitBtn">Guardar presupuesto</button>
+          </article>
+
+          <article>
+            <textarea id="f-notas" placeholder="Notas opcionales…" rows="3"></textarea>
+          </article>
+
+          <button type="submit" id="submitBtn">Guardar presupuesto</button>
         </form>
       </div>
     </div>
@@ -140,17 +144,17 @@
     <!-- VIEW: SETTINGS -->
     <div class="view" id="vSettings">
       <div class="scroll-area">
-        <div class="card">
-          <h3 class="card-title">Tus datos</h3>
-          <input class="inp" type="text" id="s-nombre" placeholder="Nombre / Empresa *">
-          <input class="inp" type="text" id="s-nif" placeholder="NIF / CIF">
-          <input class="inp" type="email" id="s-email" placeholder="Email">
-          <input class="inp" type="tel" id="s-tel" placeholder="Teléfono">
-          <textarea class="inp" id="s-dir" placeholder="Dirección completa" rows="2"></textarea>
-          <input class="inp" type="text" id="s-iban" placeholder="IBAN (aparece en facturas)">
-        </div>
-        <div class="card" id="planCard"></div>
-        <button class="btn-primary w100" id="saveSettingsBtn">Guardar cambios</button>
+        <article>
+          <header><strong>Tus datos</strong></header>
+          <input type="text" id="s-nombre" placeholder="Nombre / Empresa *">
+          <input type="text" id="s-nif" placeholder="NIF / CIF">
+          <input type="email" id="s-email" placeholder="Email">
+          <input type="tel" id="s-tel" placeholder="Teléfono">
+          <textarea id="s-dir" placeholder="Dirección completa" rows="2"></textarea>
+          <input type="text" id="s-iban" placeholder="IBAN (aparece en facturas)">
+        </article>
+        <div id="planCard"></div>
+        <button id="saveSettingsBtn">Guardar cambios</button>
       </div>
     </div>
 
@@ -185,8 +189,8 @@
       <div class="feature-item">✓ Clientes guardados</div>
       <div class="feature-item">✓ Exportar datos</div>
     </div>
-    <button class="btn-primary w100" id="upgradePay">Activar Pro — 4,99 €/mes</button>
-    <button class="btn-ghost w100" id="upgradeClose">Ahora no</button>
+    <button id="upgradePay">Activar Pro — 4,99 €/mes</button>
+    <button class="outline" id="upgradeClose">Ahora no</button>
   </div>
 </div>
 
@@ -196,8 +200,8 @@
     <h2 id="mConfirmTitle">¿Eliminar?</h2>
     <p id="mConfirmMsg">Esta acción no se puede deshacer.</p>
     <div class="modal-row">
-      <button class="btn-ghost" id="mConfirmNo">Cancelar</button>
-      <button class="btn-danger" id="mConfirmYes">Eliminar</button>
+      <button class="outline" id="mConfirmNo">Cancelar</button>
+      <button class="danger" id="mConfirmYes">Eliminar</button>
     </div>
   </div>
 </div>
@@ -207,7 +211,7 @@
   <div class="modal-card">
     <h2>Cambiar estado</h2>
     <div id="statusOpts"></div>
-    <button class="btn-ghost w100" id="mStatusClose">Cancelar</button>
+    <button class="outline" id="mStatusClose">Cancelar</button>
   </div>
 </div>
 
