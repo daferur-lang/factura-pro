@@ -3,7 +3,7 @@
 const STRIPE_LINK = 'https://buy.stripe.com/6oU4gz0nU5uu1DW5Aq8Vi07';
 
 const S = { PROFILE:'fp_profile', DOCS:'fp_docs', COUNTERS:'fp_counters', PLAN:'fp_plan' };
-const FREE_LIMIT = 1;
+const FREE_LIMIT = 3;
 const ESTADOS = {
   borrador:  { label:'Borrador',  cls:'badge-borrador' },
   enviado:   { label:'Enviado',   cls:'badge-enviado' },
@@ -40,7 +40,7 @@ function useSlot() {
   if(plan.month !== month) { plan.month=month; plan.count=0; }
   plan.count++; save(S.PLAN, plan);
 }
-function ym() { const d=new Date(); return `${d.getFullYear()}-${d.getMonth()}`; }
+function ym() { const d=new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`; }
 function usedThisMonth() { const plan=loadPlan(); if(plan.month!==ym()) return 0; return plan.count; }
 
 function fmt(n) { return (n||0).toLocaleString('es-ES',{minimumFractionDigits:2,maximumFractionDigits:2})+' €'; }
@@ -93,7 +93,7 @@ function renderStats() {
     <div class="stat-item"><div class="stat-val">${fmt(pendiente)}</div><div class="stat-lbl">Pendiente de cobro</div></div>
     <div class="stat-item"><div class="stat-val">${docs.filter(d=>d.tipo==='factura').length}</div><div class="stat-lbl">Facturas totales</div></div>`;
 }
-function ym_of(dateStr) { if(!dateStr) return ''; const [y,,m]=dateStr.split('-'); return `${y}-${m}`; }
+function ym_of(dateStr) { if(!dateStr) return ''; const [y,m]=dateStr.split('-'); return `${y}-${m}`; }
 
 function renderDocList() {
   const docs=loadDocs().filter(d=>d.tipo===state.tab.replace('s',''));
@@ -307,6 +307,7 @@ function generatePDF(doc) {
     y+=8; if(y>240){pdf.addPage();y=20;}
   });
   y+=4;
+  if(y+42>270){pdf.addPage();y=20;}
   const boxX=130; pdf.setDrawColor(229,231,235); pdf.setFillColor(255,255,255);
   pdf.roundedRect(boxX,y,W-mR-boxX,32,2,2,'FD');
   pdf.setFont('helvetica','normal'); pdf.setFontSize(9); pdf.setTextColor(107,114,128);
@@ -318,6 +319,7 @@ function generatePDF(doc) {
   pdf.setFont('helvetica','bold'); pdf.setFontSize(11); pdf.setTextColor(79,70,229);
   pdf.text(fmt(doc.total),col2,y+27,{align:'right'}); y+=38;
   if(doc.notas){
+    if(y+24>270){pdf.addPage();y=20;}
     pdf.setFont('helvetica','bold'); pdf.setFontSize(8); pdf.setTextColor(150,150,150);
     pdf.text('NOTAS',mL,y); y+=5;
     pdf.setFont('helvetica','normal'); pdf.setFontSize(9); pdf.setTextColor(55,65,81);
@@ -417,6 +419,14 @@ function bindEvents() {
 }
 
 document.addEventListener('DOMContentLoaded',()=>{
-  if('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(()=>{});  
+  const params=new URLSearchParams(window.location.search);
+  let justActivated=false;
+  if(params.get('pro')==='1'&&!isPro()){
+    const plan=loadPlan(); plan.pro=true; save(S.PLAN,plan);
+    window.history.replaceState({},'',window.location.pathname);
+    justActivated=true;
+  }
+  if('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(()=>{});
   bindEvents(); initOnboarding();
+  if(justActivated) setTimeout(()=>showToast('Plan Pro activado ✓'),400);
 });
