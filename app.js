@@ -1,6 +1,6 @@
 'use strict';
 
-const STRIPE_LINK = 'https://buy.stripe.com/6oU4gz0nU5uu1DW5Aq8Vi07';
+const STRIPE_LINK = 'https://buy.stripe.com/4gMeVdc6C6yybew3si8Vi08';
 
 const S = { PROFILE:'fp_profile', DOCS:'fp_docs', COUNTERS:'fp_counters', PLAN:'fp_plan' };
 const FREE_LIMIT = 7;
