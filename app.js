@@ -3,7 +3,7 @@
 const STRIPE_LINK = 'https://buy.stripe.com/6oU4gz0nU5uu1DW5Aq8Vi07';
 
 const S = { PROFILE:'fp_profile', DOCS:'fp_docs', COUNTERS:'fp_counters', PLAN:'fp_plan' };
-const FREE_LIMIT = 3;
+const FREE_LIMIT = 7;
 const ESTADOS = {
   borrador:  { label:'Borrador',  cls:'badge-borrador' },
   enviado:   { label:'Enviado',   cls:'badge-enviado' },
@@ -268,7 +268,7 @@ function renderSettings() {
   document.getElementById('planCard').innerHTML=`
     <h3 class="card-title">Plan</h3>
     <div class="plan-info"><span class="plan-name">${pro?'Pro':'Gratuito'}</span><span class="plan-badge ${pro?'pro':'free'}">${pro?'PRO':'FREE'}</span></div>
-    ${!pro?`<div class="plan-meter"><div class="plan-meter-fill" style="width:${pct}%"></div></div><div class="plan-meter-txt">${used} de ${FREE_LIMIT} documentos este mes</div><button class="btn-primary w100" id="upgradeFromSettings">Activar Pro — 4,99 €/mes</button>`:`<p style="font-size:.88rem;color:var(--gray-3)">Acceso ilimitado activado. Gracias ❤️</p>`}`;
+    ${!pro?`<div class="plan-meter"><div class="plan-meter-fill" style="width:${pct}%"></div></div><div class="plan-meter-txt">${used} de ${FREE_LIMIT} documentos este mes</div><button class="btn-primary w100" id="upgradeFromSettings">Activar Pro — 2,99 €/mes</button>`:`<p style="font-size:.88rem;color:var(--gray-3)">Acceso ilimitado activado. Gracias ❤️</p>`}`;
   document.getElementById('upgradeFromSettings')?.addEventListener('click',()=>showOverlay('mUpgrade'));
 }
 
