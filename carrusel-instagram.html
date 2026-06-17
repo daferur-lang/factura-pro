@@ -1,0 +1,816 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Carrusel Instagram — Facturas Pro</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,600&family=IBM+Plex+Sans:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --cream:   #F6F1EB;
+    --espresso:#18100A;
+    --amber:   #9A5200;
+    --gold:    #C8883A;
+    --gold2:   #E8A850;
+    --serif:   'Cormorant Garamond', Georgia, serif;
+    --sans:    'IBM Plex Sans', sans-serif;
+    --mono:    'IBM Plex Mono', monospace;
+  }
+
+  body {
+    background: #2a2a2a;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 40px;
+    padding: 40px 20px;
+    font-family: var(--sans);
+  }
+
+  .label {
+    color: #aaa;
+    font-family: var(--sans);
+    font-size: 13px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: -20px;
+    align-self: flex-start;
+    margin-left: calc(50% - 540px);
+  }
+
+  .slide {
+    width: 1080px;
+    height: 1080px;
+    position: relative;
+    overflow: hidden;
+    flex-shrink: 0;
+  }
+
+  /* ─── SLIDE 1: HOOK ─── */
+  .s1 {
+    background: var(--cream);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: flex-start;
+    padding: 100px;
+  }
+  .s1::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 6px;
+    background: linear-gradient(90deg, var(--gold) 0%, var(--gold2) 50%, var(--gold) 100%);
+  }
+  .s1::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 6px;
+    background: linear-gradient(90deg, var(--gold) 0%, var(--gold2) 50%, var(--gold) 100%);
+  }
+  .s1 .big-num {
+    font-family: var(--serif);
+    font-size: 280px;
+    font-weight: 700;
+    color: var(--gold);
+    opacity: 0.15;
+    position: absolute;
+    right: 60px;
+    top: 50%;
+    transform: translateY(-50%);
+    line-height: 1;
+    user-select: none;
+  }
+  .s1 .eyebrow {
+    font-family: var(--mono);
+    font-size: 16px;
+    color: var(--gold);
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    margin-bottom: 40px;
+  }
+  .s1 h1 {
+    font-family: var(--serif);
+    font-size: 88px;
+    font-weight: 600;
+    color: var(--espresso);
+    line-height: 1.05;
+    margin-bottom: 40px;
+    max-width: 700px;
+  }
+  .s1 h1 em {
+    font-style: italic;
+    color: var(--amber);
+  }
+  .s1 .arrow {
+    font-family: var(--sans);
+    font-size: 20px;
+    font-weight: 500;
+    color: var(--amber);
+    letter-spacing: 2px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 10px;
+  }
+  .s1 .logo {
+    position: absolute;
+    bottom: 56px;
+    right: 100px;
+    font-family: var(--serif);
+    font-size: 22px;
+    font-weight: 600;
+    color: var(--espresso);
+    opacity: 0.5;
+    letter-spacing: 1px;
+  }
+
+  /* ─── SLIDE 2: PROBLEMA ─── */
+  .s2 {
+    background: var(--espresso);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 100px;
+  }
+  .s2::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 5px;
+    background: linear-gradient(180deg, var(--gold) 0%, var(--gold2) 50%, var(--gold) 100%);
+  }
+  .s2 .eyebrow {
+    font-family: var(--mono);
+    font-size: 14px;
+    color: var(--gold);
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    margin-bottom: 50px;
+  }
+  .s2 h2 {
+    font-family: var(--serif);
+    font-size: 64px;
+    font-weight: 600;
+    color: var(--cream);
+    line-height: 1.1;
+    margin-bottom: 60px;
+  }
+  .s2 .checklist {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+  }
+  .s2 .check-item {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+  }
+  .s2 .check-box {
+    width: 28px;
+    height: 28px;
+    border: 2px solid var(--gold);
+    border-radius: 4px;
+    flex-shrink: 0;
+    opacity: 0.6;
+  }
+  .s2 .check-text {
+    font-family: var(--sans);
+    font-size: 26px;
+    font-weight: 300;
+    color: var(--cream);
+    opacity: 0.85;
+  }
+  .s2 .logo {
+    position: absolute;
+    bottom: 56px;
+    right: 100px;
+    font-family: var(--serif);
+    font-size: 22px;
+    font-weight: 600;
+    color: var(--cream);
+    opacity: 0.25;
+    letter-spacing: 1px;
+  }
+
+  /* ─── SLIDE 3: SOLUCIÓN ─── */
+  .s3 {
+    background: var(--cream);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    padding: 100px;
+  }
+  .s3::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 6px;
+    background: linear-gradient(90deg, var(--gold) 0%, var(--gold2) 50%, var(--gold) 100%);
+  }
+  .s3 .app-icon {
+    width: 120px;
+    height: 120px;
+    background: var(--espresso);
+    border-radius: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 50px;
+    box-shadow: 0 20px 60px rgba(24,16,10,0.2);
+  }
+  .s3 .eyebrow {
+    font-family: var(--mono);
+    font-size: 14px;
+    color: var(--gold);
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    margin-bottom: 30px;
+  }
+  .s3 h2 {
+    font-family: var(--serif);
+    font-size: 76px;
+    font-weight: 600;
+    color: var(--espresso);
+    line-height: 1.05;
+    margin-bottom: 40px;
+  }
+  .s3 h2 em {
+    font-style: italic;
+    color: var(--amber);
+  }
+  .s3 p {
+    font-family: var(--sans);
+    font-size: 26px;
+    font-weight: 300;
+    color: var(--espresso);
+    opacity: 0.7;
+    line-height: 1.6;
+    max-width: 700px;
+  }
+  .s3 .divider {
+    width: 80px;
+    height: 2px;
+    background: var(--gold);
+    margin: 40px auto;
+    opacity: 0.5;
+  }
+
+  /* ─── SLIDE 4: PRESUPUESTOS ─── */
+  .s4 {
+    background: var(--espresso);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 100px;
+  }
+  .s4 .eyebrow {
+    font-family: var(--mono);
+    font-size: 14px;
+    color: var(--gold);
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    margin-bottom: 30px;
+  }
+  .s4 h2 {
+    font-family: var(--serif);
+    font-size: 80px;
+    font-weight: 600;
+    color: var(--cream);
+    line-height: 1.05;
+    margin-bottom: 50px;
+    flex: 1;
+  }
+  .s4 h2 em {
+    font-style: italic;
+    color: var(--gold);
+  }
+  .s4 .flow {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    margin-bottom: 60px;
+  }
+  .s4 .flow-step {
+    background: rgba(255,255,255,0.07);
+    border: 1px solid rgba(200,136,58,0.3);
+    border-radius: 12px;
+    padding: 20px 32px;
+    font-family: var(--sans);
+    font-size: 20px;
+    font-weight: 500;
+    color: var(--cream);
+    text-align: center;
+  }
+  .s4 .flow-arrow {
+    font-size: 28px;
+    color: var(--gold);
+    padding: 0 20px;
+    opacity: 0.8;
+  }
+  .s4 .flow-step.highlight {
+    background: var(--gold);
+    border-color: var(--gold);
+    color: var(--espresso);
+    font-weight: 600;
+  }
+  .s4 .tagline {
+    font-family: var(--serif);
+    font-size: 28px;
+    font-style: italic;
+    color: var(--gold);
+    opacity: 0.9;
+  }
+  .s4 .logo {
+    position: absolute;
+    bottom: 56px;
+    right: 100px;
+    font-family: var(--serif);
+    font-size: 22px;
+    font-weight: 600;
+    color: var(--cream);
+    opacity: 0.25;
+    letter-spacing: 1px;
+  }
+
+  /* ─── SLIDE 5: PDF ─── */
+  .s5 {
+    background: var(--cream);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 100px;
+  }
+  .s5::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 6px;
+    background: linear-gradient(90deg, var(--gold) 0%, var(--gold2) 50%, var(--gold) 100%);
+  }
+  .s5 .eyebrow {
+    font-family: var(--mono);
+    font-size: 14px;
+    color: var(--gold);
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    margin-bottom: 30px;
+  }
+  .s5 h2 {
+    font-family: var(--serif);
+    font-size: 76px;
+    font-weight: 600;
+    color: var(--espresso);
+    line-height: 1.05;
+    margin-bottom: 50px;
+  }
+  .s5 .pdf-card {
+    background: var(--espresso);
+    border-radius: 16px;
+    padding: 40px 48px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    position: relative;
+    overflow: hidden;
+  }
+  .s5 .pdf-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, var(--gold), var(--gold2));
+  }
+  .s5 .pdf-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .s5 .pdf-label {
+    font-family: var(--sans);
+    font-size: 18px;
+    font-weight: 300;
+    color: rgba(246,241,235,0.5);
+  }
+  .s5 .pdf-value {
+    font-family: var(--mono);
+    font-size: 20px;
+    color: var(--cream);
+    font-weight: 500;
+  }
+  .s5 .pdf-divider {
+    height: 1px;
+    background: rgba(200,136,58,0.2);
+  }
+  .s5 .pdf-total-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 8px;
+  }
+  .s5 .pdf-total-label {
+    font-family: var(--serif);
+    font-size: 28px;
+    font-weight: 600;
+    color: var(--cream);
+  }
+  .s5 .pdf-total-value {
+    font-family: var(--serif);
+    font-size: 36px;
+    font-weight: 700;
+    color: var(--gold);
+  }
+  .s5 .logo {
+    position: absolute;
+    bottom: 56px;
+    right: 100px;
+    font-family: var(--serif);
+    font-size: 22px;
+    font-weight: 600;
+    color: var(--espresso);
+    opacity: 0.35;
+    letter-spacing: 1px;
+  }
+
+  /* ─── SLIDE 6: PRECIO ─── */
+  .s6 {
+    background: var(--cream);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 80px 100px;
+    gap: 0;
+  }
+  .s6 .eyebrow {
+    font-family: var(--mono);
+    font-size: 14px;
+    color: var(--gold);
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    margin-bottom: 40px;
+  }
+  .s6 .plans {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 30px;
+    flex: 1;
+  }
+  .s6 .plan {
+    border-radius: 20px;
+    padding: 48px 44px;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+  .s6 .plan.free {
+    background: white;
+    border: 1.5px solid rgba(24,16,10,0.1);
+  }
+  .s6 .plan.pro {
+    background: var(--espresso);
+    border: 1.5px solid var(--gold);
+    position: relative;
+    overflow: hidden;
+  }
+  .s6 .plan.pro::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, var(--gold), var(--gold2));
+  }
+  .s6 .plan-badge {
+    font-family: var(--mono);
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: 2px;
+    padding: 6px 14px;
+    border-radius: 20px;
+    align-self: flex-start;
+    margin-bottom: 28px;
+  }
+  .s6 .plan.free .plan-badge {
+    background: rgba(24,16,10,0.07);
+    color: var(--espresso);
+  }
+  .s6 .plan.pro .plan-badge {
+    background: var(--gold);
+    color: var(--espresso);
+  }
+  .s6 .plan-price {
+    font-family: var(--serif);
+    font-size: 58px;
+    font-weight: 700;
+    line-height: 1;
+    margin-bottom: 6px;
+  }
+  .s6 .plan.free .plan-price { color: var(--espresso); }
+  .s6 .plan.pro .plan-price { color: var(--gold); }
+  .s6 .plan-period {
+    font-family: var(--sans);
+    font-size: 16px;
+    font-weight: 300;
+    margin-bottom: 32px;
+  }
+  .s6 .plan.free .plan-period { color: rgba(24,16,10,0.5); }
+  .s6 .plan.pro .plan-period { color: rgba(246,241,235,0.5); }
+  .s6 .plan-divider {
+    height: 1px;
+    margin-bottom: 28px;
+  }
+  .s6 .plan.free .plan-divider { background: rgba(24,16,10,0.08); }
+  .s6 .plan.pro .plan-divider { background: rgba(200,136,58,0.2); }
+  .s6 .plan-features {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+  .s6 .plan-feature {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    font-family: var(--sans);
+    font-size: 19px;
+    font-weight: 400;
+  }
+  .s6 .plan.free .plan-feature { color: rgba(24,16,10,0.75); }
+  .s6 .plan.pro .plan-feature { color: rgba(246,241,235,0.85); }
+  .s6 .plan-feature::before {
+    content: '✓';
+    color: var(--gold);
+    font-weight: 700;
+    font-size: 18px;
+    flex-shrink: 0;
+  }
+
+  /* ─── SLIDE 7: CTA ─── */
+  .s7 {
+    background: var(--espresso);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    padding: 100px;
+  }
+  .s7::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 5px;
+    background: linear-gradient(90deg, var(--gold) 0%, var(--gold2) 50%, var(--gold) 100%);
+  }
+  .s7::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 5px;
+    background: linear-gradient(90deg, var(--gold) 0%, var(--gold2) 50%, var(--gold) 100%);
+  }
+  .s7 .app-name {
+    font-family: var(--serif);
+    font-size: 100px;
+    font-weight: 700;
+    color: var(--cream);
+    line-height: 1;
+    margin-bottom: 20px;
+    letter-spacing: -1px;
+  }
+  .s7 .app-tagline {
+    font-family: var(--serif);
+    font-size: 32px;
+    font-style: italic;
+    color: var(--gold);
+    margin-bottom: 70px;
+  }
+  .s7 .steps {
+    display: flex;
+    gap: 0;
+    margin-bottom: 70px;
+    align-items: center;
+  }
+  .s7 .step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+  }
+  .s7 .step-num {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    border: 1.5px solid var(--gold);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--mono);
+    font-size: 20px;
+    color: var(--gold);
+  }
+  .s7 .step-txt {
+    font-family: var(--sans);
+    font-size: 17px;
+    font-weight: 400;
+    color: rgba(246,241,235,0.65);
+    text-align: center;
+    max-width: 140px;
+    line-height: 1.4;
+  }
+  .s7 .step-line {
+    width: 80px;
+    height: 1px;
+    background: rgba(200,136,58,0.3);
+    margin: 0 10px;
+    margin-top: -22px;
+  }
+  .s7 .url-box {
+    border: 1.5px solid var(--gold);
+    border-radius: 16px;
+    padding: 24px 56px;
+  }
+  .s7 .url {
+    font-family: var(--mono);
+    font-size: 24px;
+    color: var(--gold);
+    letter-spacing: 0.5px;
+  }
+  .s7 .sub {
+    font-family: var(--sans);
+    font-size: 17px;
+    font-weight: 300;
+    color: rgba(246,241,235,0.4);
+    margin-top: 20px;
+    letter-spacing: 1px;
+  }
+
+  /* SVG icon */
+  .doc-icon {
+    fill: none;
+    stroke: var(--cream);
+    stroke-width: 2;
+  }
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════ -->
+<p class="label">Slide 1 / 7 — Hook</p>
+<div class="slide s1">
+  <div class="big-num">?</div>
+  <div class="eyebrow">Para autónomos y freelancers</div>
+  <h1>¿Cuánto tiempo<br>pierdes haciendo<br><em>facturas?</em></h1>
+  <div class="arrow">
+    Sigue leyendo &nbsp;→
+  </div>
+  <div class="logo">Facturas Pro</div>
+</div>
+
+<!-- ══════════════════════════════════════ -->
+<p class="label">Slide 2 / 7 — El problema</p>
+<div class="slide s2">
+  <div class="eyebrow">El fin de mes del freelance</div>
+  <h2>Las tareas que nadie<br>quiere hacer</h2>
+  <div class="checklist">
+    <div class="check-item"><div class="check-box"></div><span class="check-text">Pasar presupuestos a facturas a mano</span></div>
+    <div class="check-item"><div class="check-box"></div><span class="check-text">Calcular el IVA sin equivocarse</span></div>
+    <div class="check-item"><div class="check-box"></div><span class="check-text">Buscar el email y los datos del cliente</span></div>
+    <div class="check-item"><div class="check-box"></div><span class="check-text">Generar el PDF con aspecto profesional</span></div>
+    <div class="check-item"><div class="check-box"></div><span class="check-text">Hacer seguimiento de quién ha pagado</span></div>
+  </div>
+  <div class="logo">Facturas Pro</div>
+</div>
+
+<!-- ══════════════════════════════════════ -->
+<p class="label">Slide 3 / 7 — La solución</p>
+<div class="slide s3">
+  <div class="app-icon">
+    <svg width="60" height="60" viewBox="0 0 100 100">
+      <rect x="18" y="12" width="64" height="76" rx="8" stroke="#F6F1EB" stroke-width="4" fill="none"/>
+      <line x1="30" y1="34" x2="70" y2="34" stroke="#C8883A" stroke-width="3" stroke-linecap="round"/>
+      <line x1="30" y1="46" x2="70" y2="46" stroke="#F6F1EB" stroke-width="2" stroke-linecap="round" opacity=".4"/>
+      <line x1="30" y1="56" x2="55" y2="56" stroke="#F6F1EB" stroke-width="2" stroke-linecap="round" opacity=".4"/>
+      <line x1="30" y1="66" x2="60" y2="66" stroke="#F6F1EB" stroke-width="2" stroke-linecap="round" opacity=".4"/>
+    </svg>
+  </div>
+  <div class="eyebrow">La solución</div>
+  <h2>Facturas Pro<br>lo hace <em>todo</em><br>desde tu móvil</h2>
+  <div class="divider"></div>
+  <p>Crea presupuestos y facturas en segundos.<br>Sin instalar nada. Funciona en cualquier móvil.</p>
+</div>
+
+<!-- ══════════════════════════════════════ -->
+<p class="label">Slide 4 / 7 — Presupuestos → Facturas</p>
+<div class="slide s4">
+  <div>
+    <div class="eyebrow">El flujo que te ahorra tiempo</div>
+    <h2>Envía el presupuesto.<br>Cuando digan que sí,<br>conviértelo a<br><em>factura en un toque.</em></h2>
+  </div>
+  <div class="flow">
+    <div class="flow-step">Presupuesto</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step">Aceptado</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step highlight">Factura ✓</div>
+  </div>
+  <div class="tagline">Sin copiar. Sin duplicar. Sin errores.</div>
+  <div class="logo">Facturas Pro</div>
+</div>
+
+<!-- ══════════════════════════════════════ -->
+<p class="label">Slide 5 / 7 — PDF profesional</p>
+<div class="slide s5">
+  <div class="eyebrow">El resultado</div>
+  <h2>Un PDF profesional<br>listo para enviar</h2>
+  <div class="pdf-card">
+    <div class="pdf-row">
+      <span class="pdf-label">Cliente</span>
+      <span class="pdf-value">Empresa Cliente SL</span>
+    </div>
+    <div class="pdf-row">
+      <span class="pdf-label">Nº Factura</span>
+      <span class="pdf-value">F-2026-001</span>
+    </div>
+    <div class="pdf-row">
+      <span class="pdf-label">Subtotal</span>
+      <span class="pdf-value">2.000,00 €</span>
+    </div>
+    <div class="pdf-row">
+      <span class="pdf-label">IVA (21%)</span>
+      <span class="pdf-value">420,00 €</span>
+    </div>
+    <div class="pdf-divider"></div>
+    <div class="pdf-total-row">
+      <span class="pdf-total-label">TOTAL</span>
+      <span class="pdf-total-value">2.420,00 €</span>
+    </div>
+  </div>
+  <div class="logo">Facturas Pro</div>
+</div>
+
+<!-- ══════════════════════════════════════ -->
+<p class="label">Slide 6 / 7 — Precios</p>
+<div class="slide s6">
+  <div class="eyebrow">Planes sin sorpresas</div>
+  <div class="plans">
+    <div class="plan free">
+      <span class="plan-badge">GRATIS</span>
+      <div class="plan-price">0 €</div>
+      <div class="plan-period">hasta 7 docs al mes</div>
+      <div class="plan-divider"></div>
+      <div class="plan-features">
+        <div class="plan-feature">7 documentos al mes</div>
+        <div class="plan-feature">Presupuestos y facturas</div>
+        <div class="plan-feature">PDF con marca de agua</div>
+        <div class="plan-feature">Sin tarjeta de crédito</div>
+      </div>
+    </div>
+    <div class="plan pro">
+      <span class="plan-badge">PRO</span>
+      <div class="plan-price">2,99 €</div>
+      <div class="plan-period">al mes</div>
+      <div class="plan-divider"></div>
+      <div class="plan-features">
+        <div class="plan-feature">Documentos ilimitados</div>
+        <div class="plan-feature">PDF sin marca de agua</div>
+        <div class="plan-feature">Clientes guardados</div>
+        <div class="plan-feature">Exportar todos tus datos</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════ -->
+<p class="label">Slide 7 / 7 — CTA</p>
+<div class="slide s7">
+  <div class="app-name">Facturas Pro</div>
+  <div class="app-tagline">Factura como un profesional</div>
+  <div class="steps">
+    <div class="step">
+      <div class="step-num">1</div>
+      <div class="step-txt">Abre el enlace</div>
+    </div>
+    <div class="step-line"></div>
+    <div class="step">
+      <div class="step-num">2</div>
+      <div class="step-txt">Añade tus datos</div>
+    </div>
+    <div class="step-line"></div>
+    <div class="step">
+      <div class="step-num">3</div>
+      <div class="step-txt">Crea tu primera factura</div>
+    </div>
+  </div>
+  <div class="url-box">
+    <div class="url">daferur-lang.github.io/factura-pro</div>
+  </div>
+  <div class="sub">7 docs/mes gratis · Sin registro · Sin instalar</div>
+</div>
+
+</body>
+</html>
