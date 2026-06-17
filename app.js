@@ -68,7 +68,8 @@ function navigate(view, opts={}) {
     renderHome();
   } else if(view==='form') {
     backBtn.style.display='flex'; hdrSettings.style.display='none';
-    document.getElementById('hdrTitle').textContent=opts.editId?'Editar':'Nuevo presupuesto';
+    const tipoForm=opts.editId?(loadDocs().find(d=>d.id===opts.editId)?.tipo||state.tab.slice(0,-1)):state.tab.slice(0,-1);
+    document.getElementById('hdrTitle').textContent=opts.editId?'Editar':tipoForm==='factura'?'Nueva factura':'Nuevo presupuesto';
     state.editId=opts.editId||null; state.iva=21; renderForm(opts.editId);
   } else if(view==='detail') {
     backBtn.style.display='flex'; hdrSettings.style.display='none';
@@ -126,7 +127,8 @@ function renderForm(editId) {
   document.getElementById('f-fecha').value=doc?.fecha||today();
   document.getElementById('f-vence').value=doc?.vencimiento||in30();
   document.getElementById('f-notas').value=doc?.notas||'';
-  document.getElementById('submitBtn').textContent=editId?'Guardar cambios':'Guardar presupuesto';
+  const tipoActual=editId?(loadDocs().find(d=>d.id===editId)?.tipo||state.tab.slice(0,-1)):state.tab.slice(0,-1);
+  document.getElementById('submitBtn').textContent=editId?'Guardar cambios':tipoActual==='factura'?'Guardar factura':'Guardar presupuesto';
   document.querySelectorAll('.iva-btn').forEach(b=>b.classList.toggle('active',Number(b.dataset.v)===state.iva));
   renderLines();
 }
@@ -353,12 +355,13 @@ function submitForm(e) {
     saveDocs(docs); showToast('Cambios guardados ✓'); navigate('detail',{id:state.editId});
   } else {
     useSlot();
-    const doc={id:uid(),tipo:'presupuesto',numero:nextNum('presupuesto'),estado:'borrador',
+    const tipo=state.tab.slice(0,-1);
+    const doc={id:uid(),tipo,numero:nextNum(tipo),estado:'borrador',
       cliente:{nombre,nif:document.getElementById('f-cNif').value.trim(),email:document.getElementById('f-cEmail').value.trim(),direccion:document.getElementById('f-cDir').value.trim()},
       lineas:validLines,iva:state.iva,subtotal,ivaAmt,total,
       fecha:document.getElementById('f-fecha').value,vencimiento:document.getElementById('f-vence').value,
       notas:document.getElementById('f-notas').value.trim(),creadoEn:new Date().toISOString()};
-    docs.push(doc); saveDocs(docs); showToast('Presupuesto creado ✓'); navigate('detail',{id:doc.id});
+    docs.push(doc); saveDocs(docs); showToast(tipo==='factura'?'Factura creada ✓':'Presupuesto creado ✓'); navigate('detail',{id:doc.id});
   }
 }
 
