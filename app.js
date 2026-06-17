@@ -207,7 +207,7 @@ function renderDetail(id) {
     ${doc.notas?`<div class="detail-section"><div class="detail-section-title">Notas</div><p style="font-size:.9rem;color:var(--gray-2)">${esc(doc.notas)}</p></div>`:''}
     <div style="height:8px"></div>`;
   const bar=document.getElementById('actionBar');
-  bar.innerHTML=`${doc.tipo==='presupuesto'&&doc.estado==='aceptado'?`<button class="btn-primary" id="aConvert">→ Factura</button>`:''}<button class="btn-primary" id="aPdf">PDF</button><button class="btn-ghost" id="aMenu">…</button>`;
+  bar.innerHTML=`${doc.tipo==='presupuesto'&&doc.estado==='aceptado'&&!doc.convertidoEn?`<button class="btn-primary" id="aConvert">→ Factura</button>`:''}<button class="btn-primary" id="aPdf">PDF</button><button class="btn-ghost" id="aMenu">…</button>`;
   document.getElementById('aPdf')?.addEventListener('click',()=>generatePDF(doc));
   document.getElementById('aConvert')?.addEventListener('click',()=>convertToInvoice(id));
   document.getElementById('aMenu')?.addEventListener('click',()=>showDocMenu(id));
@@ -250,6 +250,7 @@ function convertToInvoice(id) {
   if(!orig) return;
   if(!canCreate()) { showOverlay('mUpgrade'); return; }
   const inv={...orig,id:uid(),tipo:'factura',numero:nextNum('factura'),estado:'enviado',fecha:today(),vencimiento:in30(),creadoEn:new Date().toISOString()};
+  orig.convertidoEn=new Date().toISOString();
   useSlot(); docs.push(inv); saveDocs(docs);
   showToast('Convertido a factura ✓'); navigate('detail',{id:inv.id});
 }
