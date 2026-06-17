@@ -85,7 +85,7 @@ function renderHome() { document.getElementById('hdrTitle').textContent='Factura
 
 function renderStats() {
   const docs=loadDocs(); const month=ym();
-  const thisMonth=docs.filter(d=>ym_of(d.fecha)===month);
+  const thisMonth=docs.filter(d=>ym_of(d.fecha)===month&&d.tipo==='factura');
   const totalMes=thisMonth.reduce((s,d)=>s+d.total,0);
   const pendiente=docs.filter(d=>d.tipo==='factura'&&d.estado!=='pagado').reduce((s,d)=>s+d.total,0);
   document.getElementById('statsStrip').innerHTML=`
@@ -96,7 +96,7 @@ function renderStats() {
 function ym_of(dateStr) { if(!dateStr) return ''; const [y,m]=dateStr.split('-'); return `${y}-${m}`; }
 
 function renderDocList() {
-  const docs=loadDocs().filter(d=>d.tipo===state.tab.replace('s',''));
+  const docs=loadDocs().filter(d=>d.tipo===state.tab.slice(0,-1));
   const docList=document.getElementById('docList');
   const empty=document.getElementById('emptyState');
   document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active',t.dataset.t===state.tab));
@@ -205,7 +205,7 @@ function renderDetail(id) {
     ${doc.notas?`<div class="detail-section"><div class="detail-section-title">Notas</div><p style="font-size:.9rem;color:var(--gray-2)">${esc(doc.notas)}</p></div>`:''}
     <div style="height:8px"></div>`;
   const bar=document.getElementById('actionBar');
-  bar.innerHTML=`${doc.tipo==='presupuesto'?`<button class="btn-primary" id="aConvert">→ Factura</button>`:''}<button class="btn-primary" id="aPdf">PDF</button><button class="btn-ghost" id="aMenu">…</button>`;
+  bar.innerHTML=`${doc.tipo==='presupuesto'&&doc.estado==='aceptado'?`<button class="btn-primary" id="aConvert">→ Factura</button>`:''}<button class="btn-primary" id="aPdf">PDF</button><button class="btn-ghost" id="aMenu">…</button>`;
   document.getElementById('aPdf')?.addEventListener('click',()=>generatePDF(doc));
   document.getElementById('aConvert')?.addEventListener('click',()=>convertToInvoice(id));
   document.getElementById('aMenu')?.addEventListener('click',()=>showDocMenu(id));
