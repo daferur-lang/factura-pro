@@ -52,7 +52,8 @@ function showToast(msg) { const t=document.getElementById('toast'); t.textConten
 function showOverlay(id) { document.getElementById(id).classList.remove('hidden'); }
 function hideOverlay(id) { document.getElementById(id).classList.add('hidden'); }
 
-let state = { tab:'presupuestos', editId:null, detailId:null, iva:21 };
+let state = { tab:'presupuestos', editId:null, detailId:null, iva:21, irpf:0 };
+let formDirty = false;
 
 const VIEWS = { home:'vHome', form:'vForm', detail:'vDetail', settings:'vSettings' };
 function navigate(view, opts={}) {
@@ -120,6 +121,7 @@ function renderForm(editId) {
   const doc=editId?loadDocs().find(d=>d.id===editId):null;
   lines=doc?doc.lineas.map(l=>({...l})):[newLine()];
   state.iva=doc?doc.iva:21;
+  state.irpf=doc?.irpf||0;
   document.getElementById('f-cNombre').value=doc?.cliente.nombre||'';
   document.getElementById('f-cNif').value=doc?.cliente.nif||'';
   document.getElementById('f-cEmail').value=doc?.cliente.email||'';
@@ -129,8 +131,10 @@ function renderForm(editId) {
   document.getElementById('f-notas').value=doc?.notas||'';
   const tipoActual=editId?(loadDocs().find(d=>d.id===editId)?.tipo||state.tab.slice(0,-1)):state.tab.slice(0,-1);
   document.getElementById('submitBtn').textContent=editId?'Guardar cambios':tipoActual==='factura'?'Guardar factura':'Guardar presupuesto';
-  document.querySelectorAll('.iva-btn').forEach(b=>b.classList.toggle('active',Number(b.dataset.v)===state.iva));
+  document.querySelectorAll('.iva-btn:not(.irpf-btn)').forEach(b=>b.classList.toggle('active',Number(b.dataset.v)===state.iva));
+  document.querySelectorAll('.irpf-btn').forEach(b=>b.classList.toggle('active',Number(b.dataset.v)===state.irpf));
   renderLines();
+  formDirty=false;
 }
 
 function newLine() { return {id:uid(),desc:'',qty:1,price:0}; }
@@ -151,23 +155,33 @@ function renderLines() {
     </div>`).join('');
   wrap.querySelectorAll('input[data-field]').forEach(inp=>inp.addEventListener('input',()=>{
     const i=Number(inp.dataset.i); const f=inp.dataset.field;
-    if(f==='desc') lines[i].desc=inp.value; else lines[i][f]=parseFloat(inp.value)||0;
+    if(f==='desc') lines[i].desc=inp.value; else lines[i][f]=Math.max(0,parseFloat(inp.value)||0);
+    formDirty=true;
     updateTotals();
     wrap.querySelector(`[data-lid="${lines[i].id}"] .line-total`).textContent=fmt(lines[i].qty*lines[i].price);
   }));
-  wrap.querySelectorAll('[data-del]').forEach(btn=>btn.addEventListener('click',()=>{ lines.splice(Number(btn.dataset.del),1); renderLines(); updateTotals(); }));
+  wrap.querySelectorAll('[data-del]').forEach(btn=>btn.addEventListener('click',()=>{ lines.splice(Number(btn.dataset.del),1); formDirty=true; renderLines(); updateTotals(); }));
   updateTotals();
 }
 
 function updateTotals() {
   const sub=lines.reduce((s,l)=>s+l.qty*l.price,0);
   const ivaAmt=sub*state.iva/100;
+  const irpfAmt=sub*state.irpf/100;
   document.getElementById('tSubtotal').textContent=fmt(sub);
   document.getElementById('tIvaLabel').textContent=`IVA (${state.iva}%)`;
   document.getElementById('tIva').textContent=fmt(ivaAmt);
-  document.getElementById('tTotal').textContent=fmt(sub+ivaAmt);
+  document.getElementById('tIrpfRow').classList.toggle('hidden',state.irpf<=0);
+  document.getElementById('tIrpfLabel').textContent=`Retención IRPF (-${state.irpf}%)`;
+  document.getElementById('tIrpf').textContent=`-${fmt(irpfAmt)}`;
+  document.getElementById('tTotal').textContent=fmt(sub+ivaAmt-irpfAmt);
 }
-function calcTotals() { const sub=lines.reduce((s,l)=>s+l.qty*l.price,0); const ivaAmt=sub*state.iva/100; return {subtotal:sub,ivaAmt,total:sub+ivaAmt}; }
+function calcTotals() {
+  const sub=lines.reduce((s,l)=>s+l.qty*l.price,0);
+  const ivaAmt=sub*state.iva/100;
+  const irpfAmt=sub*state.irpf/100;
+  return {subtotal:sub,ivaAmt,irpfAmt,total:sub+ivaAmt-irpfAmt};
+}
 
 function renderDetail(id) {
   const doc=loadDocs().find(d=>d.id===id);
@@ -202,6 +216,7 @@ function renderDetail(id) {
     <div class="detail-totals">
       <div class="total-row"><span>Subtotal</span><b>${fmt(doc.subtotal)}</b></div>
       <div class="total-row"><span>IVA (${doc.iva}%)</span><b>${fmt(doc.ivaAmt)}</b></div>
+      ${doc.irpf?`<div class="total-row"><span>Retención IRPF (-${doc.irpf}%)</span><b>-${fmt(doc.irpfAmt)}</b></div>`:''}
       <div class="total-row final"><span>TOTAL</span><b>${fmt(doc.total)}</b></div>
     </div>
     ${doc.notas?`<div class="detail-section"><div class="detail-section-title">Notas</div><p style="font-size:.9rem;color:var(--gray-2)">${esc(doc.notas)}</p></div>`:''}
@@ -237,11 +252,25 @@ function setStatus(id,status) {
 function confirmDelete(id) {
   document.getElementById('mConfirmTitle').textContent='¿Eliminar documento?';
   document.getElementById('mConfirmMsg').textContent='Esta acción no se puede deshacer.';
+  document.getElementById('mConfirmYes').textContent='Eliminar';
+  document.getElementById('mConfirmYes').className='danger';
   showOverlay('mConfirm');
   document.getElementById('mConfirmYes').onclick=()=>{
     hideOverlay('mConfirm');
     saveDocs(loadDocs().filter(d=>d.id!==id));
     showToast('Documento eliminado'); navigate('home');
+  };
+}
+
+function confirmLeaveForm(after) {
+  if(!formDirty) { after(); return; }
+  document.getElementById('mConfirmTitle').textContent='¿Salir sin guardar?';
+  document.getElementById('mConfirmMsg').textContent='Tienes cambios sin guardar. Se perderán si sales ahora.';
+  document.getElementById('mConfirmYes').textContent='Salir';
+  document.getElementById('mConfirmYes').className='outline';
+  showOverlay('mConfirm');
+  document.getElementById('mConfirmYes').onclick=()=>{
+    hideOverlay('mConfirm'); formDirty=false; after();
   };
 }
 
@@ -310,17 +339,21 @@ function generatePDF(doc) {
     y+=8; if(y>240){pdf.addPage();y=20;}
   });
   y+=4;
-  if(y+42>270){pdf.addPage();y=20;}
+  const hasIrpf=doc.irpf>0;
+  const boxH=hasIrpf?40:32; const totalLineY=hasIrpf?35:27;
+  if(y+boxH+10>270){pdf.addPage();y=20;}
   const boxX=130; pdf.setDrawColor(229,231,235); pdf.setFillColor(255,255,255);
-  pdf.roundedRect(boxX,y,W-mR-boxX,32,2,2,'FD');
+  pdf.roundedRect(boxX,y,W-mR-boxX,boxH,2,2,'FD');
   pdf.setFont('helvetica','normal'); pdf.setFontSize(9); pdf.setTextColor(107,114,128);
   pdf.text('Subtotal',boxX+4,y+8); pdf.text(`IVA (${doc.iva}%)`,boxX+4,y+16);
+  if(hasIrpf) pdf.text(`Retención IRPF (-${doc.irpf}%)`,boxX+4,y+24);
   pdf.setFont('helvetica','bold'); pdf.setFontSize(10); pdf.setTextColor(17,24,39);
-  pdf.text('TOTAL',boxX+4,y+27);
+  pdf.text('TOTAL',boxX+4,y+totalLineY);
   pdf.setFont('helvetica','normal'); pdf.setFontSize(9); pdf.setTextColor(107,114,128);
   pdf.text(fmt(doc.subtotal),col2,y+8,{align:'right'}); pdf.text(fmt(doc.ivaAmt),col2,y+16,{align:'right'});
+  if(hasIrpf) pdf.text(`-${fmt(doc.irpfAmt)}`,col2,y+24,{align:'right'});
   pdf.setFont('helvetica','bold'); pdf.setFontSize(11); pdf.setTextColor(79,70,229);
-  pdf.text(fmt(doc.total),col2,y+27,{align:'right'}); y+=38;
+  pdf.text(fmt(doc.total),col2,y+totalLineY,{align:'right'}); y+=boxH+6;
   if(doc.notas){
     if(y+24>270){pdf.addPage();y=20;}
     pdf.setFont('helvetica','bold'); pdf.setFontSize(8); pdf.setTextColor(150,150,150);
@@ -343,26 +376,26 @@ function submitForm(e) {
   if(!validLines.length){showToast('Añade al menos un concepto');return;}
   const isEdit=!!state.editId;
   if(!isEdit&&!canCreate()){showOverlay('mUpgrade');return;}
-  const {subtotal,ivaAmt,total}=calcTotals();
+  const {subtotal,ivaAmt,irpfAmt,total}=calcTotals();
   const docs=loadDocs();
   if(isEdit) {
     const doc=docs.find(d=>d.id===state.editId);
     if(doc){
       doc.cliente={nombre,nif:document.getElementById('f-cNif').value.trim(),email:document.getElementById('f-cEmail').value.trim(),direccion:document.getElementById('f-cDir').value.trim()};
-      doc.lineas=validLines; doc.iva=state.iva; doc.subtotal=subtotal; doc.ivaAmt=ivaAmt; doc.total=total;
+      doc.lineas=validLines; doc.iva=state.iva; doc.irpf=state.irpf; doc.subtotal=subtotal; doc.ivaAmt=ivaAmt; doc.irpfAmt=irpfAmt; doc.total=total;
       doc.fecha=document.getElementById('f-fecha').value; doc.vencimiento=document.getElementById('f-vence').value;
       doc.notas=document.getElementById('f-notas').value.trim();
     }
-    saveDocs(docs); showToast('Cambios guardados ✓'); navigate('detail',{id:state.editId});
+    formDirty=false; saveDocs(docs); showToast('Cambios guardados ✓'); navigate('detail',{id:state.editId});
   } else {
     useSlot();
     const tipo=state.tab.slice(0,-1);
     const doc={id:uid(),tipo,numero:nextNum(tipo),estado:'borrador',
       cliente:{nombre,nif:document.getElementById('f-cNif').value.trim(),email:document.getElementById('f-cEmail').value.trim(),direccion:document.getElementById('f-cDir').value.trim()},
-      lineas:validLines,iva:state.iva,subtotal,ivaAmt,total,
+      lineas:validLines,iva:state.iva,irpf:state.irpf,subtotal,ivaAmt,irpfAmt,total,
       fecha:document.getElementById('f-fecha').value,vencimiento:document.getElementById('f-vence').value,
       notas:document.getElementById('f-notas').value.trim(),creadoEn:new Date().toISOString()};
-    docs.push(doc); saveDocs(docs); showToast(tipo==='factura'?'Factura creada ✓':'Presupuesto creado ✓'); navigate('detail',{id:doc.id});
+    formDirty=false; docs.push(doc); saveDocs(docs); showToast(tipo==='factura'?'Factura creada ✓':'Presupuesto creado ✓'); navigate('detail',{id:doc.id});
   }
 }
 
@@ -392,25 +425,35 @@ function initOnboarding() {
 function bindEvents() {
   document.getElementById('backBtn').addEventListener('click',()=>{
     const active=document.querySelector('.view.active');
-    if(active?.id==='vDetail') navigate('home');
-    else if(active?.id==='vForm') state.editId?navigate('detail',{id:state.editId}):navigate('home');
+    if(active?.id==='vForm') confirmLeaveForm(()=>state.editId?navigate('detail',{id:state.editId}):navigate('home'));
+    else if(active?.id==='vDetail') navigate('home');
     else navigate('home');
   });
   document.getElementById('hdrSettingsBtn').addEventListener('click',()=>navigate('settings'));
   document.querySelectorAll('.nav-btn').forEach(btn=>btn.addEventListener('click',()=>{
     const nav=btn.dataset.nav;
-    if(nav==='home') navigate('home');
-    else if(nav==='new'){if(!canCreate()){showOverlay('mUpgrade');return;}navigate('form');}
-    else if(nav==='settings') navigate('settings');
+    const doNav=()=>{
+      if(nav==='home') navigate('home');
+      else if(nav==='new'){if(!canCreate()){showOverlay('mUpgrade');return;}navigate('form');}
+      else if(nav==='settings') navigate('settings');
+    };
+    const active=document.querySelector('.view.active');
+    if(active?.id==='vForm') confirmLeaveForm(doNav); else doNav();
   }));
   document.getElementById('fabBtn').addEventListener('click',()=>{ if(!canCreate()){showOverlay('mUpgrade');return;} navigate('form'); });
   document.querySelectorAll('.tab').forEach(tab=>tab.addEventListener('click',()=>{ state.tab=tab.dataset.t; renderDocList(); }));
-  document.getElementById('addLineBtn').addEventListener('click',()=>{ lines.push(newLine()); renderLines(); });
-  document.querySelectorAll('.iva-btn').forEach(btn=>btn.addEventListener('click',()=>{
-    state.iva=Number(btn.dataset.v);
-    document.querySelectorAll('.iva-btn').forEach(b=>b.classList.toggle('active',Number(b.dataset.v)===state.iva));
+  document.getElementById('addLineBtn').addEventListener('click',()=>{ lines.push(newLine()); formDirty=true; renderLines(); });
+  document.querySelectorAll('.iva-btn:not(.irpf-btn)').forEach(btn=>btn.addEventListener('click',()=>{
+    state.iva=Number(btn.dataset.v); formDirty=true;
+    document.querySelectorAll('.iva-btn:not(.irpf-btn)').forEach(b=>b.classList.toggle('active',Number(b.dataset.v)===state.iva));
     updateTotals();
   }));
+  document.querySelectorAll('.irpf-btn').forEach(btn=>btn.addEventListener('click',()=>{
+    state.irpf=Number(btn.dataset.v); formDirty=true;
+    document.querySelectorAll('.irpf-btn').forEach(b=>b.classList.toggle('active',Number(b.dataset.v)===state.irpf));
+    updateTotals();
+  }));
+  document.getElementById('docForm').addEventListener('input',()=>{formDirty=true;});
   document.getElementById('docForm').addEventListener('submit',submitForm);
   document.getElementById('saveSettingsBtn').addEventListener('click',saveSettings);
   document.getElementById('upgradePay').addEventListener('click',()=>{

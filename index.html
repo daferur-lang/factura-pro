@@ -11,6 +11,7 @@
   <title>Facturas Pro</title>
   <link rel="manifest" href="manifest.json">
   <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icons/icon-180.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,600&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
@@ -109,11 +110,21 @@
                 <button type="button" class="iva-btn" data-v="0">0%</button>
                 <button type="button" class="iva-btn active" data-v="21">21%</button>
                 <button type="button" class="iva-btn" data-v="10">10%</button>
+                <button type="button" class="iva-btn" data-v="4">4%</button>
+              </div>
+            </div>
+            <div class="iva-row">
+              <span class="iva-label">Retención IRPF</span>
+              <div class="iva-group">
+                <button type="button" class="iva-btn irpf-btn active" data-v="0">0%</button>
+                <button type="button" class="iva-btn irpf-btn" data-v="7">7%</button>
+                <button type="button" class="iva-btn irpf-btn" data-v="15">15%</button>
               </div>
             </div>
             <div class="totals">
               <div class="total-row"><span>Subtotal</span><b id="tSubtotal">0,00 €</b></div>
               <div class="total-row"><span id="tIvaLabel">IVA (21%)</span><b id="tIva">0,00 €</b></div>
+              <div class="total-row hidden" id="tIrpfRow"><span id="tIrpfLabel">Retención IRPF (-15%)</span><b id="tIrpf">-0,00 €</b></div>
               <div class="total-row final"><span>TOTAL</span><b id="tTotal">0,00 €</b></div>
             </div>
           </article>
@@ -189,8 +200,6 @@
     <div class="feature-list">
       <div class="feature-item">✓ Documentos ilimitados</div>
       <div class="feature-item">✓ PDF sin marca de agua</div>
-      <div class="feature-item">✓ Clientes guardados</div>
-      <div class="feature-item">✓ Exportar datos</div>
     </div>
     <button id="upgradePay">Activar Pro — 2,99 €/mes</button>
     <button class="outline" id="upgradeClose">Ahora no</button>

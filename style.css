@@ -96,7 +96,7 @@ body > :not(.overlay):not(#shell):not(#toast):not(script) { display: none; }
   font-size: 1.7rem; font-weight: 600; font-style: italic;
   color: #F0E8DE; margin-bottom: 8px;
 }
-.ob-card p { color: rgba(240,232,222,.38); font-size: .9rem; margin-bottom: 24px; font-weight: 300; }
+.ob-card p { color: rgba(240,232,222,.62); font-size: .9rem; margin-bottom: 24px; font-weight: 300; }
 .ob-card input { margin-bottom: 10px; }
 .ob-card button[type=submit] { width: 100%; margin-top: 6px; }
 
@@ -243,7 +243,7 @@ body > :not(.overlay):not(#shell):not(#toast):not(script) { display: none; }
 .nav-btn {
   flex: 1; display: flex; flex-direction: column;
   align-items: center; justify-content: center; gap: 4px;
-  color: rgba(255,255,255,.3);
+  color: rgba(240,232,222,.62);
   font-family: var(--sans); font-size: .6rem; font-weight: 400;
   background: none; border: none; cursor: pointer;
   text-transform: uppercase; letter-spacing: .06em;

@@ -1,5 +1,6 @@
-const CACHE = 'facturas-pro-v6';
-const ASSETS = ['./', './index.html', './style.css', './app.js', './manifest.json', './icons/icon.svg',
+const CACHE = 'facturas-pro-v7';
+const ASSETS = ['./', './index.html', './style.css', './app.js', './manifest.json',
+  './icons/icon.svg', './icons/icon-180.png', './icons/icon-192.png', './icons/icon-512.png',
   'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js',
   'https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css'];
 self.addEventListener('install', e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS))); self.skipWaiting(); });

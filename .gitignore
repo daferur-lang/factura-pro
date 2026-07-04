@@ -1,0 +1,21 @@
+# Dependencias
+node_modules/
+
+# Entornos y secretos
+.env
+.env.*
+*creds*
+*credential*
+*.pem
+*.key
+
+# Sistema
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Editores
+.vscode/
+.idea/
