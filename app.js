@@ -2,7 +2,7 @@
 
 const STRIPE_LINK = 'https://buy.stripe.com/4gMeVdc6C6yybew3si8Vi08';
 
-const S = { PROFILE:'fp_profile', DOCS:'fp_docs', COUNTERS:'fp_counters', PLAN:'fp_plan' };
+const S = { PROFILE:'fp_profile', DOCS:'fp_docs', COUNTERS:'fp_counters', PLAN:'fp_plan', CLIENTS:'fp_clients' };
 const FREE_LIMIT = 7;
 const ESTADOS = {
   borrador:  { label:'Borrador',  cls:'badge-borrador' },
@@ -18,6 +18,27 @@ const loadDocs = () => load(S.DOCS, []);
 const saveDocs = (d) => save(S.DOCS, d);
 const loadProfile = () => load(S.PROFILE, {});
 const loadPlan = () => load(S.PLAN, { pro:false, month:'', count:0 });
+const loadClients = () => load(S.CLIENTS, []);
+const saveClients = (c) => save(S.CLIENTS, c);
+
+function clientKey(nombre, nif) {
+  const n=(nif||'').trim().toUpperCase();
+  return n ? `nif:${n}` : `nombre:${(nombre||'').trim().toLowerCase()}`;
+}
+function upsertClientFromDoc(cliente) {
+  if(!cliente?.nombre) return;
+  const clients=loadClients();
+  const key=clientKey(cliente.nombre,cliente.nif);
+  const now=new Date().toISOString();
+  const existing=clients.find(c=>clientKey(c.nombre,c.nif)===key);
+  if(existing) {
+    existing.nombre=cliente.nombre; existing.nif=cliente.nif; existing.email=cliente.email;
+    existing.direccion=cliente.direccion; existing.actualizadoEn=now;
+  } else {
+    clients.push({id:uid(),nombre:cliente.nombre,nif:cliente.nif||'',email:cliente.email||'',telefono:'',direccion:cliente.direccion||'',creadoEn:now,actualizadoEn:now});
+  }
+  saveClients(clients);
+}
 
 function getCounters() { return load(S.COUNTERS, { p:0, f:0 }); }
 function nextNum(type) {
@@ -55,7 +76,7 @@ function hideOverlay(id) { document.getElementById(id).classList.add('hidden'); 
 let state = { tab:'presupuestos', editId:null, detailId:null, iva:21, irpf:0 };
 let formDirty = false;
 
-const VIEWS = { home:'vHome', form:'vForm', detail:'vDetail', settings:'vSettings' };
+const VIEWS = { home:'vHome', form:'vForm', detail:'vDetail', settings:'vSettings', clients:'vClients' };
 function navigate(view, opts={}) {
   Object.values(VIEWS).forEach(id => { const el=document.getElementById(id); if(el) el.classList.remove('active'); });
   const el=document.getElementById(VIEWS[view]); if(el) el.classList.add('active');
@@ -80,6 +101,10 @@ function navigate(view, opts={}) {
     document.getElementById('hdrTitle').textContent='Perfil';
     document.querySelector('[data-nav="settings"]')?.classList.add('active');
     renderSettings();
+  } else if(view==='clients') {
+    backBtn.style.display='flex'; hdrSettings.style.display='none';
+    document.getElementById('hdrTitle').textContent='Clientes';
+    renderClients();
   }
 }
 
@@ -135,6 +160,8 @@ function renderForm(editId) {
   document.querySelectorAll('.irpf-btn').forEach(b=>b.classList.toggle('active',Number(b.dataset.v)===state.irpf));
   renderLines();
   formDirty=false;
+  const suggestBox=document.getElementById('clientSuggest');
+  suggestBox.classList.add('hidden'); suggestBox.innerHTML='';
 }
 
 function newLine() { return {id:uid(),desc:'',qty:1,price:0}; }
@@ -284,6 +311,81 @@ function convertToInvoice(id) {
   showToast('Convertido a factura ✓'); navigate('detail',{id:inv.id});
 }
 
+function renderClients() {
+  const list=document.getElementById('clientsList');
+  const empty=document.getElementById('clientsEmpty');
+  const clients=[...loadClients()].sort((a,b)=>a.nombre.localeCompare(b.nombre,'es'));
+  if(!clients.length) { list.innerHTML=''; empty.classList.remove('hidden'); return; }
+  empty.classList.add('hidden');
+  list.innerHTML=clients.map(c=>`
+    <div class="doc-card" data-id="${c.id}">
+      <div class="doc-card-top">
+        <div><div class="doc-card-cliente">${esc(c.nombre)}</div><div class="doc-card-num">${esc(c.nif||'Sin NIF')}</div></div>
+      </div>
+      ${c.email||c.telefono?`<div class="doc-card-bottom"><span class="doc-card-date">${esc(c.email||c.telefono)}</span></div>`:''}
+    </div>`).join('');
+  list.querySelectorAll('.doc-card').forEach(card=>card.addEventListener('click',()=>openClientForm(card.dataset.id)));
+}
+
+let clientFormId=null;
+function openClientForm(id) {
+  clientFormId=id||null;
+  const c=id?loadClients().find(x=>x.id===id):null;
+  document.getElementById('mClientTitle').textContent=id?'Editar cliente':'Nuevo cliente';
+  document.getElementById('mc-nombre').value=c?.nombre||'';
+  document.getElementById('mc-nif').value=c?.nif||'';
+  document.getElementById('mc-email').value=c?.email||'';
+  document.getElementById('mc-tel').value=c?.telefono||'';
+  document.getElementById('mc-dir').value=c?.direccion||'';
+  document.getElementById('mClientDelete').style.display=id?'block':'none';
+  showOverlay('mClientForm');
+}
+
+function saveClientForm() {
+  const nombre=document.getElementById('mc-nombre').value.trim();
+  if(!nombre) { showToast('El nombre es obligatorio'); return; }
+  const data={nombre,nif:document.getElementById('mc-nif').value.trim(),email:document.getElementById('mc-email').value.trim(),
+    telefono:document.getElementById('mc-tel').value.trim(),direccion:document.getElementById('mc-dir').value.trim()};
+  const clients=loadClients();
+  const now=new Date().toISOString();
+  if(clientFormId) {
+    const c=clients.find(x=>x.id===clientFormId);
+    if(c) Object.assign(c,data,{actualizadoEn:now});
+  } else {
+    clients.push({id:uid(),...data,creadoEn:now,actualizadoEn:now});
+  }
+  saveClients(clients);
+  hideOverlay('mClientForm'); showToast('Cliente guardado ✓'); renderClients();
+}
+
+function deleteClientForm() {
+  if(!clientFormId) return;
+  saveClients(loadClients().filter(c=>c.id!==clientFormId));
+  hideOverlay('mClientForm'); showToast('Cliente eliminado'); renderClients();
+}
+
+function renderClientSuggestions(query) {
+  const box=document.getElementById('clientSuggest');
+  if(!isPro()||query.trim().length<2) { box.classList.add('hidden'); box.innerHTML=''; return; }
+  const q=query.trim().toLowerCase();
+  const matches=loadClients().filter(c=>c.nombre.toLowerCase().includes(q)).slice(0,5);
+  if(!matches.length) { box.classList.add('hidden'); box.innerHTML=''; return; }
+  box.innerHTML=matches.map(c=>`<div class="client-suggest-item" data-id="${c.id}"><b>${esc(c.nombre)}</b>${c.nif?` · ${esc(c.nif)}`:''}</div>`).join('');
+  box.classList.remove('hidden');
+  box.querySelectorAll('[data-id]').forEach(item=>item.addEventListener('mousedown',e=>{
+    e.preventDefault();
+    const c=loadClients().find(x=>x.id===item.dataset.id);
+    if(c) {
+      document.getElementById('f-cNombre').value=c.nombre;
+      document.getElementById('f-cNif').value=c.nif||'';
+      document.getElementById('f-cEmail').value=c.email||'';
+      document.getElementById('f-cDir').value=c.direccion||'';
+      formDirty=true;
+    }
+    box.classList.add('hidden'); box.innerHTML='';
+  }));
+}
+
 function renderSettings() {
   const p=loadProfile();
   document.getElementById('s-nombre').value=p.nombre||'';
@@ -299,6 +401,11 @@ function renderSettings() {
     <div class="plan-info"><span class="plan-name">${pro?'Pro':'Gratuito'}</span><span class="plan-badge ${pro?'pro':'free'}">${pro?'PRO':'FREE'}</span></div>
     ${!pro?`<div class="plan-meter"><div class="plan-meter-fill" style="width:${pct}%"></div></div><div class="plan-meter-txt">${used} de ${FREE_LIMIT} documentos este mes</div><button class="btn-primary w100" id="upgradeFromSettings">Activar Pro — 2,99 €/mes</button>`:`<p style="font-size:.88rem;color:var(--gray-3)">Acceso ilimitado activado. Gracias ❤️</p>`}`;
   document.getElementById('upgradeFromSettings')?.addEventListener('click',()=>showOverlay('mUpgrade'));
+  const clientCount=loadClients().length;
+  document.getElementById('clientsCard').innerHTML=pro
+    ?`<button class="btn-primary w100" type="button" id="goClients">Clientes guardados (${clientCount})</button>`
+    :`<button class="outline w100" type="button" id="goClients">🔒 Clientes guardados — función Pro</button>`;
+  document.getElementById('goClients').addEventListener('click',()=>isPro()?navigate('clients'):showOverlay('mUpgrade'));
 }
 
 function generatePDF(doc) {
@@ -385,6 +492,7 @@ function submitForm(e) {
       doc.lineas=validLines; doc.iva=state.iva; doc.irpf=state.irpf; doc.subtotal=subtotal; doc.ivaAmt=ivaAmt; doc.irpfAmt=irpfAmt; doc.total=total;
       doc.fecha=document.getElementById('f-fecha').value; doc.vencimiento=document.getElementById('f-vence').value;
       doc.notas=document.getElementById('f-notas').value.trim();
+      upsertClientFromDoc(doc.cliente);
     }
     formDirty=false; saveDocs(docs); showToast('Cambios guardados ✓'); navigate('detail',{id:state.editId});
   } else {
@@ -395,6 +503,7 @@ function submitForm(e) {
       lineas:validLines,iva:state.iva,irpf:state.irpf,subtotal,ivaAmt,irpfAmt,total,
       fecha:document.getElementById('f-fecha').value,vencimiento:document.getElementById('f-vence').value,
       notas:document.getElementById('f-notas').value.trim(),creadoEn:new Date().toISOString()};
+    upsertClientFromDoc(doc.cliente);
     formDirty=false; docs.push(doc); saveDocs(docs); showToast(tipo==='factura'?'Factura creada ✓':'Presupuesto creado ✓'); navigate('detail',{id:doc.id});
   }
 }
@@ -455,6 +564,15 @@ function bindEvents() {
   }));
   document.getElementById('docForm').addEventListener('input',()=>{formDirty=true;});
   document.getElementById('docForm').addEventListener('submit',submitForm);
+  document.getElementById('f-cNombre').addEventListener('input',e=>renderClientSuggestions(e.target.value));
+  document.getElementById('f-cNombre').addEventListener('focus',e=>renderClientSuggestions(e.target.value));
+  document.getElementById('f-cNombre').addEventListener('blur',()=>setTimeout(()=>{
+    const box=document.getElementById('clientSuggest'); box.classList.add('hidden'); box.innerHTML='';
+  },150));
+  document.getElementById('clientsFabBtn').addEventListener('click',()=>openClientForm(null));
+  document.getElementById('mClientCancel').addEventListener('click',()=>hideOverlay('mClientForm'));
+  document.getElementById('mClientSave').addEventListener('click',saveClientForm);
+  document.getElementById('mClientDelete').addEventListener('click',deleteClientForm);
   document.getElementById('saveSettingsBtn').addEventListener('click',saveSettings);
   document.getElementById('upgradePay').addEventListener('click',()=>{
     window.open(STRIPE_LINK, '_blank');

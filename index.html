@@ -89,7 +89,10 @@
         <form id="docForm" novalidate>
           <article>
             <header><strong>Cliente</strong></header>
-            <input type="text" id="f-cNombre" placeholder="Nombre / Empresa *" required>
+            <div class="client-field-wrap">
+              <input type="text" id="f-cNombre" placeholder="Nombre / Empresa *" required autocomplete="off">
+              <div class="client-suggest hidden" id="clientSuggest"></div>
+            </div>
             <input type="text" id="f-cNif" placeholder="NIF / CIF">
             <input type="email" id="f-cEmail" placeholder="Email del cliente">
             <textarea id="f-cDir" placeholder="Dirección" rows="2"></textarea>
@@ -168,8 +171,22 @@
           <input type="text" id="s-iban" placeholder="IBAN (aparece en facturas)">
         </article>
         <div id="planCard"></div>
+        <div id="clientsCard"></div>
         <button id="saveSettingsBtn">Guardar cambios</button>
       </div>
+    </div>
+
+    <!-- VIEW: CLIENTS -->
+    <div class="view" id="vClients">
+      <div id="clientsList"></div>
+      <div class="empty-state hidden" id="clientsEmpty">
+        <div class="empty-icon">👥</div>
+        <p class="empty-title">Sin clientes guardados</p>
+        <p class="empty-sub">Se guardan solos al crear un documento, o pulsa +</p>
+      </div>
+      <button class="fab" id="clientsFabBtn" aria-label="Nuevo cliente">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      </button>
     </div>
 
   </main>
@@ -200,6 +217,7 @@
     <div class="feature-list">
       <div class="feature-item">✓ Documentos ilimitados</div>
       <div class="feature-item">✓ PDF sin marca de agua</div>
+      <div class="feature-item">✓ Clientes guardados</div>
     </div>
     <button id="upgradePay">Activar Pro — 2,99 €/mes</button>
     <button class="outline" id="upgradeClose">Ahora no</button>
@@ -224,6 +242,23 @@
     <h2>Cambiar estado</h2>
     <div id="statusOpts"></div>
     <button class="outline" id="mStatusClose">Cancelar</button>
+  </div>
+</div>
+
+<!-- MODAL: CLIENT FORM -->
+<div class="overlay hidden" id="mClientForm">
+  <div class="modal-card" style="text-align:left;padding:22px">
+    <h2 id="mClientTitle" style="font-style:normal;text-align:left">Nuevo cliente</h2>
+    <input type="text" id="mc-nombre" placeholder="Nombre / Empresa *">
+    <input type="text" id="mc-nif" placeholder="NIF / CIF">
+    <input type="email" id="mc-email" placeholder="Email">
+    <input type="tel" id="mc-tel" placeholder="Teléfono">
+    <textarea id="mc-dir" placeholder="Dirección" rows="2"></textarea>
+    <div class="modal-row">
+      <button class="outline" id="mClientCancel" type="button">Cancelar</button>
+      <button id="mClientSave" type="button">Guardar</button>
+    </div>
+    <button class="outline" id="mClientDelete" type="button" style="width:100%;margin-top:8px;color:var(--danger);border-color:var(--danger);display:none">Eliminar cliente</button>
   </div>
 </div>
 

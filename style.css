@@ -294,7 +294,7 @@ body > :not(.overlay):not(#shell):not(#toast):not(script) { display: none; }
 .tab.active { color: var(--amber); border-bottom-color: var(--amber); font-weight: 500; }
 
 /* ── LISTA DE DOCUMENTOS (estilo libro contable) ── */
-#docList {
+#docList, #clientsList {
   flex: 1; overflow-y: auto;
   -webkit-overflow-scrolling: touch;
   padding: 0 0 calc(var(--nav-h) + 16px);
@@ -361,6 +361,47 @@ body > :not(.overlay):not(#shell):not(#toast):not(script) { display: none; }
 .date-col { flex: 1; }
 .date-col label { display: block; font-size: .68rem; font-weight: 500; color: var(--gray-4); margin-bottom: 2px; text-transform: uppercase; letter-spacing: .07em; }
 .date-col input { margin-bottom: 0; }
+
+/* ── AUTOCOMPLETAR CLIENTE ── */
+.client-field-wrap { position: relative; }
+.client-suggest {
+  position: absolute; top: 100%; left: 0; right: 0; z-index: 20;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius-sm); box-shadow: var(--shadow-md);
+  max-height: 180px; overflow-y: auto; margin-top: 2px;
+}
+.client-suggest-item {
+  padding: 9px 12px; font-size: .85rem; color: var(--gray-1);
+  cursor: pointer; border-bottom: 1px solid var(--border-2);
+}
+.client-suggest-item:last-child { border-bottom: none; }
+.client-suggest-item:active { background: var(--bg); }
+.client-suggest-item b { font-weight: 500; }
+
+/* ── INPUTS DE MODALES (mismo estilo editorial que el formulario) ── */
+.modal-card input[type=text],
+.modal-card input[type=email],
+.modal-card input[type=tel],
+.modal-card textarea {
+  background: transparent !important;
+  border: none !important;
+  border-bottom: 1px solid var(--border) !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  padding: 9px 0 7px !important;
+  color: var(--gray-1) !important;
+  font-family: var(--sans) !important;
+  font-size: .88rem !important;
+  font-weight: 400 !important;
+  margin-bottom: 10px;
+  transition: border-color .15s !important;
+}
+.modal-card input:focus, .modal-card textarea:focus {
+  border-bottom-color: var(--amber) !important; outline: none !important; box-shadow: none !important;
+}
+.modal-card input::placeholder, .modal-card textarea::placeholder {
+  color: var(--gray-5) !important; font-weight: 300 !important;
+}
 
 /* ── LÍNEAS DE CONCEPTO ── */
 .line-item {
@@ -572,6 +613,7 @@ button.danger {
   padding: 0; margin-bottom: 12px;
   border: 1px solid var(--border); overflow: hidden;
 }
+#clientsCard { margin-bottom: 12px; }
 .card-title {
   font-family: var(--serif); font-size: 1rem; font-style: italic;
   color: var(--gray-2); font-weight: 500;
