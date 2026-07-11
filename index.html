@@ -95,6 +95,7 @@
             </div>
             <input type="text" id="f-cNif" placeholder="NIF / CIF">
             <input type="email" id="f-cEmail" placeholder="Email del cliente">
+            <input type="tel" id="f-cTel" placeholder="Teléfono (para WhatsApp)">
             <textarea id="f-cDir" placeholder="Dirección" rows="2"></textarea>
           </article>
 
@@ -189,6 +190,28 @@
       </button>
     </div>
 
+    <!-- VIEW: AGENDA -->
+    <div class="view" id="vAgenda">
+      <div class="pro-lock hidden" id="agendaLock">
+        <div class="pro-lock-card">
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="10" rx="2"/><circle cx="12" cy="16" r="1"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          <h3>Agenda de citas</h3>
+          <p>Organiza tu semana y envía recordatorios por WhatsApp a tus clientes.</p>
+          <button class="btn-primary" id="agendaUnlockBtn" type="button">Activar Pro — 2,99 €/mes</button>
+        </div>
+      </div>
+      <div class="week-strip hidden" id="weekStrip"></div>
+      <div class="agenda-list hidden" id="agendaList"></div>
+      <div class="empty-state hidden" id="agendaEmpty">
+        <div class="empty-icon">🗓️</div>
+        <p class="empty-title">Sin citas este día</p>
+        <p class="empty-sub">Pulsa + para añadir una</p>
+      </div>
+      <button class="fab hidden" id="agendaFabBtn" aria-label="Nueva cita">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      </button>
+    </div>
+
   </main>
 
   <!-- BOTTOM NAV -->
@@ -200,6 +223,10 @@
     <button class="nav-btn" data-nav="new">
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="11" x2="12" y2="17"/><line x1="9" y1="14" x2="15" y2="14"/></svg>
       <span>Nuevo</span>
+    </button>
+    <button class="nav-btn" data-nav="agenda">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+      <span>Agenda</span>
     </button>
     <button class="nav-btn" data-nav="settings">
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
@@ -218,6 +245,8 @@
       <div class="feature-item">✓ Documentos ilimitados</div>
       <div class="feature-item">✓ PDF sin marca de agua</div>
       <div class="feature-item">✓ Clientes guardados</div>
+      <div class="feature-item">✓ Agenda de citas</div>
+      <div class="feature-item">✓ Enviar por WhatsApp</div>
     </div>
     <button id="upgradePay">Activar Pro — 2,99 €/mes</button>
     <button class="outline" id="upgradeClose">Ahora no</button>
@@ -259,6 +288,30 @@
       <button id="mClientSave" type="button">Guardar</button>
     </div>
     <button class="outline" id="mClientDelete" type="button" style="width:100%;margin-top:8px;color:var(--danger);border-color:var(--danger);display:none">Eliminar cliente</button>
+  </div>
+</div>
+
+<!-- MODAL: CITA FORM -->
+<div class="overlay hidden" id="mCitaForm">
+  <div class="modal-card" style="text-align:left;padding:22px">
+    <h2 id="mCitaTitle" style="font-style:normal;text-align:left">Nueva cita</h2>
+    <div class="client-field-wrap">
+      <input type="text" id="ct-cliente" placeholder="Nombre del cliente *" autocomplete="off">
+      <div class="client-suggest hidden" id="citaClientSuggest"></div>
+    </div>
+    <input type="tel" id="ct-tel" placeholder="Teléfono (para WhatsApp)">
+    <div class="dates-row">
+      <div class="date-col"><label>Fecha <input type="date" id="ct-fecha"></label></div>
+      <div class="date-col"><label>Hora <input type="time" id="ct-hora"></label></div>
+    </div>
+    <div class="conflict-warning hidden" id="ctConflictWarn">⚠ Ya tienes una cita a esta hora ese día</div>
+    <textarea id="ct-dir" placeholder="Dirección" rows="2"></textarea>
+    <textarea id="ct-notas" placeholder="Notas (opcional)" rows="2"></textarea>
+    <div class="modal-row">
+      <button class="outline" id="mCitaCancel" type="button">Cancelar</button>
+      <button id="mCitaSave" type="button">Guardar</button>
+    </div>
+    <button class="outline" id="mCitaDelete" type="button" style="width:100%;margin-top:8px;color:var(--danger);border-color:var(--danger);display:none">Eliminar cita</button>
   </div>
 </div>
 

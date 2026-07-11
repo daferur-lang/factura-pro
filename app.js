@@ -2,7 +2,13 @@
 
 const STRIPE_LINK = 'https://buy.stripe.com/4gMeVdc6C6yybew3si8Vi08';
 
-const S = { PROFILE:'fp_profile', DOCS:'fp_docs', COUNTERS:'fp_counters', PLAN:'fp_plan', CLIENTS:'fp_clients' };
+const S = { PROFILE:'fp_profile', DOCS:'fp_docs', COUNTERS:'fp_counters', PLAN:'fp_plan', CLIENTS:'fp_clients', CITAS:'fp_citas' };
+const ESTADOS_CITA = {
+  pendiente: { label:'Pendiente', cls:'cita-status--pendiente' },
+  hecha:     { label:'Hecha',     cls:'cita-status--hecha' },
+  cancelada: { label:'Cancelada', cls:'cita-status--cancelada' }
+};
+const WA_ICON_SVG = '<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.45 1.32 4.95L2 22l5.29-1.39a9.9 9.9 0 0 0 4.75 1.21h.01c5.46 0 9.9-4.45 9.9-9.91 0-2.65-1.03-5.14-2.9-7.01A9.87 9.87 0 0 0 12.04 2zm0 1.67c2.2 0 4.27.86 5.82 2.41a8.2 8.2 0 0 1 2.42 5.83c0 4.55-3.7 8.24-8.25 8.24a8.2 8.2 0 0 1-4.19-1.15l-.3-.18-3.14.82.84-3.06-.2-.32a8.18 8.18 0 0 1-1.26-4.38c0-4.55 3.7-8.21 8.24-8.21zm-4.53 4.7c-.17 0-.44.06-.67.32-.23.26-.87.85-.87 2.07 0 1.22.89 2.4 1.02 2.57.12.16 1.75 2.67 4.24 3.74.59.26 1.05.41 1.41.52.59.19 1.13.16 1.55.1.47-.07 1.46-.6 1.67-1.18.2-.58.2-1.07.14-1.18-.06-.1-.23-.16-.47-.28-.25-.13-1.46-.72-1.68-.8-.23-.08-.4-.13-.56.13-.17.26-.64.8-.79.97-.14.16-.29.18-.54.06-.25-.13-1.05-.39-2-1.23-.74-.66-1.24-1.47-1.39-1.72-.14-.25-.02-.39.11-.51.11-.11.25-.29.37-.43.12-.15.16-.25.25-.42.08-.16.04-.31-.02-.43-.06-.13-.56-1.35-.77-1.85-.2-.48-.4-.42-.56-.42h-.44z"/></svg>';
 const FREE_LIMIT = 7;
 const ESTADOS = {
   borrador:  { label:'Borrador',  cls:'badge-borrador' },
@@ -20,6 +26,8 @@ const loadProfile = () => load(S.PROFILE, {});
 const loadPlan = () => load(S.PLAN, { pro:false, month:'', count:0 });
 const loadClients = () => load(S.CLIENTS, []);
 const saveClients = (c) => save(S.CLIENTS, c);
+const loadCitas = () => load(S.CITAS, []);
+const saveCitas = (c) => save(S.CITAS, c);
 
 function clientKey(nombre, nif) {
   const n=(nif||'').trim().toUpperCase();
@@ -34,8 +42,9 @@ function upsertClientFromDoc(cliente) {
   if(existing) {
     existing.nombre=cliente.nombre; existing.nif=cliente.nif; existing.email=cliente.email;
     existing.direccion=cliente.direccion; existing.actualizadoEn=now;
+    if(cliente.telefono) existing.telefono=cliente.telefono;
   } else {
-    clients.push({id:uid(),nombre:cliente.nombre,nif:cliente.nif||'',email:cliente.email||'',telefono:'',direccion:cliente.direccion||'',creadoEn:now,actualizadoEn:now});
+    clients.push({id:uid(),nombre:cliente.nombre,nif:cliente.nif||'',email:cliente.email||'',telefono:cliente.telefono||'',direccion:cliente.direccion||'',creadoEn:now,actualizadoEn:now});
   }
   saveClients(clients);
 }
@@ -73,10 +82,10 @@ function showToast(msg) { const t=document.getElementById('toast'); t.textConten
 function showOverlay(id) { document.getElementById(id).classList.remove('hidden'); }
 function hideOverlay(id) { document.getElementById(id).classList.add('hidden'); }
 
-let state = { tab:'presupuestos', editId:null, detailId:null, iva:21, irpf:0 };
+let state = { tab:'presupuestos', editId:null, detailId:null, iva:21, irpf:0, agendaDate:today() };
 let formDirty = false;
 
-const VIEWS = { home:'vHome', form:'vForm', detail:'vDetail', settings:'vSettings', clients:'vClients' };
+const VIEWS = { home:'vHome', form:'vForm', detail:'vDetail', settings:'vSettings', clients:'vClients', agenda:'vAgenda' };
 function navigate(view, opts={}) {
   Object.values(VIEWS).forEach(id => { const el=document.getElementById(id); if(el) el.classList.remove('active'); });
   const el=document.getElementById(VIEWS[view]); if(el) el.classList.add('active');
@@ -105,6 +114,11 @@ function navigate(view, opts={}) {
     backBtn.style.display='flex'; hdrSettings.style.display='none';
     document.getElementById('hdrTitle').textContent='Clientes';
     renderClients();
+  } else if(view==='agenda') {
+    backBtn.style.display='none'; hdrSettings.style.display='none';
+    document.getElementById('hdrTitle').textContent='Agenda';
+    document.querySelector('[data-nav="agenda"]')?.classList.add('active');
+    renderAgenda();
   }
 }
 
@@ -150,6 +164,7 @@ function renderForm(editId) {
   document.getElementById('f-cNombre').value=doc?.cliente.nombre||'';
   document.getElementById('f-cNif').value=doc?.cliente.nif||'';
   document.getElementById('f-cEmail').value=doc?.cliente.email||'';
+  document.getElementById('f-cTel').value=doc?.cliente.telefono||'';
   document.getElementById('f-cDir').value=doc?.cliente.direccion||'';
   document.getElementById('f-fecha').value=doc?.fecha||today();
   document.getElementById('f-vence').value=doc?.vencimiento||in30();
@@ -234,6 +249,7 @@ function renderDetail(id) {
       <div class="detail-section-title">Cliente</div>
       ${doc.cliente.nif?`<div style="font-size:.9rem;color:var(--gray-2)">NIF: ${esc(doc.cliente.nif)}</div>`:''}
       ${doc.cliente.email?`<div style="font-size:.9rem;color:var(--gray-2)">${esc(doc.cliente.email)}</div>`:''}
+      ${doc.cliente.telefono?`<div style="font-size:.9rem;color:var(--gray-2)">${esc(doc.cliente.telefono)}</div>`:''}
       ${doc.cliente.direccion?`<div style="font-size:.9rem;color:var(--gray-3)">${esc(doc.cliente.direccion)}</div>`:''}
     </div>`:''}
     <div class="detail-section">
@@ -249,9 +265,11 @@ function renderDetail(id) {
     ${doc.notas?`<div class="detail-section"><div class="detail-section-title">Notas</div><p style="font-size:.9rem;color:var(--gray-2)">${esc(doc.notas)}</p></div>`:''}
     <div style="height:8px"></div>`;
   const bar=document.getElementById('actionBar');
-  bar.innerHTML=`${doc.tipo==='presupuesto'&&doc.estado==='aceptado'&&!doc.convertidoEn?`<button class="btn-primary" id="aConvert">→ Factura</button>`:''}<button class="btn-primary" id="aPdf">PDF</button><button class="btn-ghost" id="aMenu">…</button>`;
+  const waDisabled=doc.cliente.telefono?'':'disabled';
+  bar.innerHTML=`${doc.tipo==='presupuesto'&&doc.estado==='aceptado'&&!doc.convertidoEn?`<button class="btn-primary" id="aConvert">→ Factura</button>`:''}<button class="btn-primary" id="aPdf">PDF</button><button class="btn-wa" id="aWhatsapp" title="${doc.cliente.telefono?'Enviar por WhatsApp':'Añade el teléfono del cliente para enviar por WhatsApp'}" ${waDisabled}>${WA_ICON_SVG} WhatsApp</button><button class="btn-ghost" id="aMenu">…</button>`;
   document.getElementById('aPdf')?.addEventListener('click',()=>generatePDF(doc));
   document.getElementById('aConvert')?.addEventListener('click',()=>convertToInvoice(id));
+  document.getElementById('aWhatsapp')?.addEventListener('click',()=>sendDocViaWhatsapp(doc));
   document.getElementById('aMenu')?.addEventListener('click',()=>showDocMenu(id));
 }
 
@@ -379,11 +397,208 @@ function renderClientSuggestions(query) {
       document.getElementById('f-cNombre').value=c.nombre;
       document.getElementById('f-cNif').value=c.nif||'';
       document.getElementById('f-cEmail').value=c.email||'';
+      document.getElementById('f-cTel').value=c.telefono||'';
       document.getElementById('f-cDir').value=c.direccion||'';
       formDirty=true;
     }
     box.classList.add('hidden'); box.innerHTML='';
   }));
+}
+
+/* ── AGENDA ── */
+function startOfWeek(dateStr) {
+  const d=new Date(dateStr+'T00:00:00');
+  const dow=(d.getDay()+6)%7; // 0=lunes
+  d.setDate(d.getDate()-dow);
+  return d;
+}
+function toISO(d) { return d.toISOString().split('T')[0]; }
+
+function renderAgenda() {
+  const lock=document.getElementById('agendaLock');
+  const strip=document.getElementById('weekStrip');
+  const list=document.getElementById('agendaList');
+  const fab=document.getElementById('agendaFabBtn');
+  if(!isPro()) {
+    lock.classList.remove('hidden');
+    strip.classList.add('hidden'); list.classList.add('hidden'); fab.classList.add('hidden');
+    document.getElementById('agendaEmpty').classList.add('hidden');
+    return;
+  }
+  lock.classList.add('hidden');
+  strip.classList.remove('hidden'); list.classList.remove('hidden'); fab.classList.remove('hidden');
+  renderWeekStrip();
+  renderCitaList();
+}
+
+function renderWeekStrip() {
+  const strip=document.getElementById('weekStrip');
+  const start=startOfWeek(state.agendaDate);
+  const citas=loadCitas();
+  const DOWS=['L','M','X','J','V','S','D'];
+  let html='';
+  for(let i=0;i<7;i++) {
+    const d=new Date(start); d.setDate(start.getDate()+i);
+    const iso=toISO(d);
+    const hasCitas=citas.some(c=>c.fecha===iso);
+    const active=iso===state.agendaDate;
+    html+=`<div class="day-cell${active?' active':''}${hasCitas?' has-citas':''}" data-date="${iso}">
+      <span class="dow">${DOWS[i]}</span><span class="dnum">${d.getDate()}</span><span class="dot"></span>
+    </div>`;
+  }
+  strip.innerHTML=html;
+  strip.querySelectorAll('.day-cell').forEach(cell=>cell.addEventListener('click',()=>{
+    state.agendaDate=cell.dataset.date; renderWeekStrip(); renderCitaList();
+  }));
+}
+
+function renderCitaList() {
+  const list=document.getElementById('agendaList');
+  const empty=document.getElementById('agendaEmpty');
+  const citas=loadCitas().filter(c=>c.fecha===state.agendaDate).sort((a,b)=>(a.hora||'').localeCompare(b.hora||''));
+  if(!citas.length) { list.innerHTML=''; empty.classList.remove('hidden'); return; }
+  empty.classList.add('hidden');
+  list.innerHTML=citas.map(c=>{
+    const info=ESTADOS_CITA[c.estado]||ESTADOS_CITA.pendiente;
+    const tieneTel=!!c.cliente.telefono;
+    return `<div class="cita-card" data-id="${c.id}">
+      <div class="cita-time">${c.hora||'--:--'}</div>
+      <div class="cita-body">
+        <div class="cita-cliente">${esc(c.cliente.nombre||'Sin nombre')}</div>
+        ${c.direccion?`<div class="cita-dir">${esc(c.direccion)}</div>`:''}
+      </div>
+      <span class="cita-status ${info.cls}">${info.label}</span>
+      <button class="cita-wa" data-wa-id="${c.id}" aria-label="Enviar recordatorio por WhatsApp" title="Enviar recordatorio por WhatsApp" ${tieneTel?'':'disabled'} type="button">${WA_ICON_SVG}</button>
+    </div>`;
+  }).join('');
+  list.querySelectorAll('.cita-card').forEach(card=>card.addEventListener('click',e=>{
+    if(e.target.closest('.cita-wa')) return;
+    openCitaForm(card.dataset.id);
+  }));
+  list.querySelectorAll('.cita-wa').forEach(btn=>btn.addEventListener('click',e=>{
+    e.stopPropagation();
+    if(!btn.disabled) sendCitaReminder(btn.dataset.waId);
+  }));
+}
+
+let citaFormId=null;
+function openCitaForm(id) {
+  citaFormId=id||null;
+  const c=id?loadCitas().find(x=>x.id===id):null;
+  document.getElementById('mCitaTitle').textContent=id?'Editar cita':'Nueva cita';
+  document.getElementById('ct-cliente').value=c?.cliente.nombre||'';
+  document.getElementById('ct-tel').value=c?.cliente.telefono||'';
+  document.getElementById('ct-fecha').value=c?.fecha||state.agendaDate||today();
+  document.getElementById('ct-hora').value=c?.hora||'';
+  document.getElementById('ct-dir').value=c?.direccion||'';
+  document.getElementById('ct-notas').value=c?.notas||'';
+  document.getElementById('mCitaDelete').style.display=id?'block':'none';
+  document.getElementById('ctConflictWarn').classList.add('hidden');
+  const box=document.getElementById('citaClientSuggest');
+  box.classList.add('hidden'); box.innerHTML='';
+  showOverlay('mCitaForm');
+}
+
+function citaConflict(fecha,hora,excludeId) {
+  if(!hora) return false;
+  return loadCitas().some(c=>c.id!==excludeId && c.fecha===fecha && c.hora===hora && c.estado!=='cancelada');
+}
+
+function checkCitaConflict() {
+  const fecha=document.getElementById('ct-fecha').value;
+  const hora=document.getElementById('ct-hora').value;
+  document.getElementById('ctConflictWarn').classList.toggle('hidden', !citaConflict(fecha,hora,citaFormId));
+}
+
+function saveCitaForm() {
+  const nombre=document.getElementById('ct-cliente').value.trim();
+  const fecha=document.getElementById('ct-fecha').value;
+  if(!nombre) { showToast('El nombre del cliente es obligatorio'); return; }
+  if(!fecha) { showToast('La fecha es obligatoria'); return; }
+  const telefono=document.getElementById('ct-tel').value.trim();
+  const data={
+    cliente:{nombre,telefono},
+    fecha, hora:document.getElementById('ct-hora').value,
+    direccion:document.getElementById('ct-dir').value.trim(),
+    notas:document.getElementById('ct-notas').value.trim()
+  };
+  const citas=loadCitas();
+  if(citaFormId) {
+    const c=citas.find(x=>x.id===citaFormId);
+    if(c) Object.assign(c,data);
+  } else {
+    citas.push({id:uid(),...data,estado:'pendiente',creadoEn:new Date().toISOString()});
+  }
+  saveCitas(citas);
+  if(nombre) upsertClientFromDoc({nombre,telefono,direccion:data.direccion});
+  hideOverlay('mCitaForm'); showToast('Cita guardada ✓');
+  state.agendaDate=fecha; renderWeekStrip(); renderCitaList();
+}
+
+function deleteCitaForm() {
+  if(!citaFormId) return;
+  saveCitas(loadCitas().filter(c=>c.id!==citaFormId));
+  hideOverlay('mCitaForm'); showToast('Cita eliminada'); renderWeekStrip(); renderCitaList();
+}
+
+function renderCitaClientSuggestions(query) {
+  const box=document.getElementById('citaClientSuggest');
+  if(query.trim().length<2) { box.classList.add('hidden'); box.innerHTML=''; return; }
+  const q=query.trim().toLowerCase();
+  const matches=loadClients().filter(c=>c.nombre.toLowerCase().includes(q)).slice(0,5);
+  if(!matches.length) { box.classList.add('hidden'); box.innerHTML=''; return; }
+  box.innerHTML=matches.map(c=>`<div class="client-suggest-item" data-id="${c.id}"><b>${esc(c.nombre)}</b>${c.telefono?` · ${esc(c.telefono)}`:''}</div>`).join('');
+  box.classList.remove('hidden');
+  box.querySelectorAll('[data-id]').forEach(item=>item.addEventListener('mousedown',e=>{
+    e.preventDefault();
+    const c=loadClients().find(x=>x.id===item.dataset.id);
+    if(c) {
+      document.getElementById('ct-cliente').value=c.nombre;
+      document.getElementById('ct-tel').value=c.telefono||'';
+      document.getElementById('ct-dir').value=c.direccion||'';
+    }
+    box.classList.add('hidden'); box.innerHTML='';
+  }));
+}
+
+/* ── WHATSAPP ── */
+function formatPhoneWa(tel) {
+  let digits=(tel||'').replace(/[^\d+]/g,'');
+  if(digits.startsWith('+')) return digits.slice(1);
+  digits=digits.replace(/^0+/,'');
+  if(digits.length===9) return '34'+digits;
+  return digits;
+}
+function buildWaLink(tel,text) {
+  return `https://wa.me/${formatPhoneWa(tel)}?text=${encodeURIComponent(text)}`;
+}
+
+function sendCitaReminder(id) {
+  const c=loadCitas().find(x=>x.id===id);
+  if(!c||!c.cliente.telefono) return;
+  const p=loadProfile();
+  const msg=`Hola ${c.cliente.nombre}, te recuerdo tu cita el ${fmtDate(c.fecha)}${c.hora?` a las ${c.hora}`:''}${c.direccion?` en ${c.direccion}`:''}. Un saludo${p.nombre?`, ${p.nombre}`:''}.`;
+  window.open(buildWaLink(c.cliente.telefono,msg),'_blank');
+}
+
+async function sendDocViaWhatsapp(doc) {
+  const tel=doc.cliente.telefono;
+  if(!tel) { showToast('Añade el teléfono del cliente para enviar por WhatsApp'); return; }
+  const pdf=buildDocPDF(doc);
+  const filename=`${doc.numero}.pdf`;
+  const msg=`Hola ${doc.cliente.nombre}, te envío ${doc.tipo==='factura'?'la factura':'el presupuesto'} ${doc.numero} por ${fmt(doc.total)}. Un saludo.`;
+  try {
+    const blob=pdf.output('blob');
+    const file=new File([blob],filename,{type:'application/pdf'});
+    if(navigator.canShare && navigator.canShare({files:[file]})) {
+      await navigator.share({files:[file],text:msg});
+      showToast('Compartido ✓');
+      return;
+    }
+  } catch(err) { if(err?.name==='AbortError') return; }
+  pdf.save(filename);
+  showToast('PDF descargado — adjúntalo al chat de WhatsApp');
+  window.open(buildWaLink(tel,msg),'_blank');
 }
 
 function renderSettings() {
@@ -409,6 +624,11 @@ function renderSettings() {
 }
 
 function generatePDF(doc) {
+  const pdf=buildDocPDF(doc);
+  pdf.save(`${doc.numero}.pdf`); showToast('PDF generado ✓');
+}
+
+function buildDocPDF(doc) {
   const {jsPDF}=window.jspdf; const p=loadProfile();
   const pdf=new jsPDF({unit:'mm',format:'a4'});
   const W=210,mL=18,mR=18,col2=W-mR; let y=20; const pro=isPro();
@@ -472,7 +692,7 @@ function generatePDF(doc) {
   if(p.iban) pdf.text(`IBAN: ${p.iban}`,mL,282);
   if(p.direccion) pdf.text(p.direccion,W/2,282,{align:'center'});
   pdf.text('Generado con Facturas Pro',col2,282,{align:'right'});
-  pdf.save(`${doc.numero}.pdf`); showToast('PDF generado ✓');
+  return pdf;
 }
 
 function submitForm(e) {
@@ -488,7 +708,7 @@ function submitForm(e) {
   if(isEdit) {
     const doc=docs.find(d=>d.id===state.editId);
     if(doc){
-      doc.cliente={nombre,nif:document.getElementById('f-cNif').value.trim(),email:document.getElementById('f-cEmail').value.trim(),direccion:document.getElementById('f-cDir').value.trim()};
+      doc.cliente={nombre,nif:document.getElementById('f-cNif').value.trim(),email:document.getElementById('f-cEmail').value.trim(),telefono:document.getElementById('f-cTel').value.trim(),direccion:document.getElementById('f-cDir').value.trim()};
       doc.lineas=validLines; doc.iva=state.iva; doc.irpf=state.irpf; doc.subtotal=subtotal; doc.ivaAmt=ivaAmt; doc.irpfAmt=irpfAmt; doc.total=total;
       doc.fecha=document.getElementById('f-fecha').value; doc.vencimiento=document.getElementById('f-vence').value;
       doc.notas=document.getElementById('f-notas').value.trim();
@@ -499,7 +719,7 @@ function submitForm(e) {
     useSlot();
     const tipo=state.tab.slice(0,-1);
     const doc={id:uid(),tipo,numero:nextNum(tipo),estado:'borrador',
-      cliente:{nombre,nif:document.getElementById('f-cNif').value.trim(),email:document.getElementById('f-cEmail').value.trim(),direccion:document.getElementById('f-cDir').value.trim()},
+      cliente:{nombre,nif:document.getElementById('f-cNif').value.trim(),email:document.getElementById('f-cEmail').value.trim(),telefono:document.getElementById('f-cTel').value.trim(),direccion:document.getElementById('f-cDir').value.trim()},
       lineas:validLines,iva:state.iva,irpf:state.irpf,subtotal,ivaAmt,irpfAmt,total,
       fecha:document.getElementById('f-fecha').value,vencimiento:document.getElementById('f-vence').value,
       notas:document.getElementById('f-notas').value.trim(),creadoEn:new Date().toISOString()};
@@ -544,6 +764,7 @@ function bindEvents() {
     const doNav=()=>{
       if(nav==='home') navigate('home');
       else if(nav==='new'){if(!canCreate()){showOverlay('mUpgrade');return;}navigate('form');}
+      else if(nav==='agenda') navigate('agenda');
       else if(nav==='settings') navigate('settings');
     };
     const active=document.querySelector('.view.active');
@@ -573,6 +794,18 @@ function bindEvents() {
   document.getElementById('mClientCancel').addEventListener('click',()=>hideOverlay('mClientForm'));
   document.getElementById('mClientSave').addEventListener('click',saveClientForm);
   document.getElementById('mClientDelete').addEventListener('click',deleteClientForm);
+  document.getElementById('agendaFabBtn').addEventListener('click',()=>{ if(!isPro()){showOverlay('mUpgrade');return;} openCitaForm(null); });
+  document.getElementById('agendaUnlockBtn').addEventListener('click',()=>showOverlay('mUpgrade'));
+  document.getElementById('mCitaCancel').addEventListener('click',()=>hideOverlay('mCitaForm'));
+  document.getElementById('mCitaSave').addEventListener('click',saveCitaForm);
+  document.getElementById('mCitaDelete').addEventListener('click',deleteCitaForm);
+  document.getElementById('ct-cliente').addEventListener('input',e=>renderCitaClientSuggestions(e.target.value));
+  document.getElementById('ct-cliente').addEventListener('focus',e=>renderCitaClientSuggestions(e.target.value));
+  document.getElementById('ct-cliente').addEventListener('blur',()=>setTimeout(()=>{
+    const box=document.getElementById('citaClientSuggest'); box.classList.add('hidden'); box.innerHTML='';
+  },150));
+  document.getElementById('ct-fecha').addEventListener('input',checkCitaConflict);
+  document.getElementById('ct-hora').addEventListener('input',checkCitaConflict);
   document.getElementById('saveSettingsBtn').addEventListener('click',saveSettings);
   document.getElementById('upgradePay').addEventListener('click',()=>{
     window.open(STRIPE_LINK, '_blank');

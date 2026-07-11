@@ -46,6 +46,19 @@
   --pico-border-radius:   4px;
   --pico-form-element-border-color: #DDD5C9;
   --pico-form-element-focus-color:  #9A5200;
+}
+/* Pico define sus colores con selectores tipo :root:not([data-theme=dark]),
+   más específicos que un :root plano — sin esto, los botones sin clase propia
+   (Guardar, Empezar, etc.) caían al azul por defecto de Pico en vez del tema. */
+:root:not([data-theme=dark]) {
+  --pico-primary:                #18100A;
+  --pico-primary-background:     #18100A;
+  --pico-primary-border:         #18100A;
+  --pico-primary-hover:          #2A1A0E;
+  --pico-primary-hover-background: #2A1A0E;
+  --pico-primary-hover-border:   #2A1A0E;
+  --pico-primary-focus:          rgba(24,16,10,.2);
+  --pico-primary-inverse:        #F0E8DE;
 
   /* Tipografías */
   --serif: 'Cormorant Garamond', 'Georgia', serif;
@@ -358,9 +371,9 @@ body > :not(.overlay):not(#shell):not(#toast):not(script) { display: none; }
 
 /* ── FECHAS ── */
 .dates-row { display: flex; gap: 12px; }
-.date-col { flex: 1; }
+.date-col { flex: 1; min-width: 0; }
 .date-col label { display: block; font-size: .68rem; font-weight: 500; color: var(--gray-4); margin-bottom: 2px; text-transform: uppercase; letter-spacing: .07em; }
-.date-col input { margin-bottom: 0; }
+.date-col input { margin-bottom: 0; width: 100%; box-sizing: border-box; }
 
 /* ── AUTOCOMPLETAR CLIENTE ── */
 .client-field-wrap { position: relative; }
@@ -382,6 +395,8 @@ body > :not(.overlay):not(#shell):not(#toast):not(script) { display: none; }
 .modal-card input[type=text],
 .modal-card input[type=email],
 .modal-card input[type=tel],
+.modal-card input[type=date],
+.modal-card input[type=time],
 .modal-card textarea {
   background: transparent !important;
   border: none !important;
@@ -669,3 +684,88 @@ button.danger {
   border-radius: 2px; margin-left: 8px;
   border: 1px solid rgba(154,82,0,.3); font-family: var(--sans);
 }
+
+/* ── AGENDA ── */
+.week-strip {
+  display: flex; gap: 6px; overflow-x: auto;
+  padding: 14px 14px 10px; flex-shrink: 0;
+  scrollbar-width: none;
+}
+.week-strip::-webkit-scrollbar { display: none; }
+.day-cell {
+  flex: 1 0 auto; min-width: 44px;
+  display: flex; flex-direction: column; align-items: center; gap: 5px;
+  padding: 9px 0 8px; border-radius: var(--radius); cursor: pointer;
+  transition: background-color .15s, color .15s;
+}
+.day-cell .dow {
+  font-family: var(--sans); font-size: .62rem; text-transform: uppercase;
+  letter-spacing: .05em; color: var(--gray-4); font-weight: 500;
+}
+.day-cell .dnum {
+  font-family: var(--mono); font-size: 1rem; font-weight: 500; color: var(--gray-1);
+}
+.day-cell .dot {
+  width: 4px; height: 4px; border-radius: 50%; background: var(--amber); opacity: 0;
+}
+.day-cell.has-citas .dot { opacity: 1; }
+.day-cell:hover:not(.active) { background: var(--amber-lt); }
+.day-cell.active { background: var(--hdr); }
+.day-cell.active .dow { color: rgba(240,232,222,.55); }
+.day-cell.active .dnum { color: #F0E8DE; }
+.day-cell.active .dot { background: var(--gold-lt); }
+
+.agenda-list { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 4px 0 calc(var(--nav-h) + 24px); }
+
+.cita-card {
+  display: flex; align-items: center; gap: 12px;
+  padding: 13px 14px; background: var(--surface);
+  border: 1px solid var(--border-2); border-radius: var(--radius);
+  margin: 0 14px 8px; box-shadow: var(--shadow);
+  cursor: pointer; transition: box-shadow .15s, border-color .15s;
+}
+.cita-card:hover { box-shadow: var(--shadow-md); border-color: var(--gold); }
+.cita-card:active { background: var(--bg); }
+.cita-time { font-family: var(--mono); font-size: .92rem; font-weight: 500; color: var(--amber); min-width: 42px; flex-shrink: 0; }
+.cita-body { flex: 1; min-width: 0; }
+.cita-cliente { font-size: .92rem; font-weight: 500; color: var(--gray-1); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cita-dir { font-size: .76rem; color: var(--gray-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 1px; }
+.cita-status {
+  font-family: var(--sans); font-size: .64rem; font-weight: 500;
+  padding: 3px 8px; border-radius: 20px; white-space: nowrap; flex-shrink: 0;
+}
+.cita-status--pendiente { background: var(--amber-lt); color: var(--amber); }
+.cita-status--hecha { background: var(--grn-bg); color: var(--green); }
+.cita-status--cancelada { background: var(--gray-6); color: var(--gray-4); text-decoration: line-through; }
+.cita-wa {
+  width: 32px; height: 32px; flex-shrink: 0; padding: 0;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 50%; border: none; background: none;
+  color: #25D366; cursor: pointer; transition: background-color .15s;
+}
+.cita-wa:hover { background: rgba(37,211,102,.12); }
+.cita-wa[disabled] { color: var(--gray-4); cursor: not-allowed; }
+.cita-wa[disabled]:hover { background: none; }
+
+.conflict-warning {
+  background: var(--amber-lt); color: var(--amber);
+  font-family: var(--sans); font-size: .8rem; font-weight: 500;
+  padding: 8px 10px; border-radius: var(--radius-sm); margin: -4px 0 10px;
+}
+
+/* ── BLOQUEO PRO (Agenda) ── */
+.pro-lock { flex: 1; display: flex; align-items: center; justify-content: center; padding: 40px 24px; }
+.pro-lock-card { text-align: center; max-width: 280px; }
+.pro-lock-card svg { color: var(--gold); margin-bottom: 14px; }
+.pro-lock-card h3 { font-family: var(--serif); font-style: italic; font-size: 1.5rem; font-weight: 600; color: var(--gray-1); margin-bottom: 8px; }
+.pro-lock-card p { font-family: var(--sans); font-size: .85rem; color: var(--gray-3); font-weight: 300; margin-bottom: 18px; line-height: 1.4; }
+
+/* ── BOTÓN WHATSAPP (detalle documento) ── */
+.btn-wa {
+  --pico-background-color: #25D366;
+  --pico-border-color: #25D366;
+  --pico-color: #ffffff;
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+}
+.btn-wa:hover { --pico-background-color: #1EBE5A; --pico-border-color: #1EBE5A; }
+.btn-wa[disabled] { opacity: .5; cursor: not-allowed; }
