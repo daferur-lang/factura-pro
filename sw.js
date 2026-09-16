@@ -1,4 +1,4 @@
-const CACHE = 'facturas-pro-v7';
+const CACHE = 'facturas-pro-v9';
 const ASSETS = ['./', './index.html', './style.css', './app.js', './manifest.json',
   './icons/icon.svg', './icons/icon-180.png', './icons/icon-192.png', './icons/icon-512.png',
   'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js',

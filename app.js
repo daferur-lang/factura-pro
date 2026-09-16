@@ -50,11 +50,31 @@ function upsertClientFromDoc(cliente) {
 }
 
 function getCounters() { return load(S.COUNTERS, { p:0, f:0 }); }
+function formatNum(type, n, year) { return `${type==='presupuesto'?'P':'F'}-${year}-${String(n).padStart(3,'0')}`; }
+function peekNextNum(type) {
+  const c = getCounters();
+  const year = new Date().getFullYear();
+  return formatNum(type, (type==='presupuesto'?c.p:c.f)+1, year);
+}
 function nextNum(type) {
   const c = getCounters();
   const year = new Date().getFullYear();
-  if(type==='presupuesto'){ c.p++; save(S.COUNTERS, c); return `P-${year}-${String(c.p).padStart(3,'0')}`; }
-  else { c.f++; save(S.COUNTERS, c); return `F-${year}-${String(c.f).padStart(3,'0')}`; }
+  if(type==='presupuesto'){ c.p++; save(S.COUNTERS, c); return formatNum(type,c.p,year); }
+  else { c.f++; save(S.COUNTERS, c); return formatNum(type,c.f,year); }
+}
+// Al guardar un número escrito a mano, adelanta el contador para que el siguiente
+// documento sugerido continúe desde ahí (por ejemplo, al retomar una numeración
+// externa a mitad de año). Si el número no sigue el formato estándar, el contador
+// no se toca y la sugerencia automática sigue como si nada.
+function commitManualNum(type, numero) {
+  const year = new Date().getFullYear();
+  const prefix = type==='presupuesto'?'P':'F';
+  const m = (numero||'').trim().match(new RegExp(`^${prefix}-${year}-(\\d+)$`));
+  if(!m) return;
+  const n = Number(m[1]);
+  const c = getCounters();
+  if(type==='presupuesto') c.p=Math.max(c.p,n); else c.f=Math.max(c.f,n);
+  save(S.COUNTERS, c);
 }
 
 function isPro() { return loadPlan().pro; }
@@ -82,11 +102,13 @@ function showToast(msg) { const t=document.getElementById('toast'); t.textConten
 function showOverlay(id) { document.getElementById(id).classList.remove('hidden'); }
 function hideOverlay(id) { document.getElementById(id).classList.add('hidden'); }
 
-let state = { tab:'presupuestos', editId:null, detailId:null, iva:21, irpf:0, agendaDate:today() };
+let state = { tab:'presupuestos', editId:null, detailId:null, iva:21, irpf:0, agendaDate:today(), dateFrom:null, dateTo:null };
 let formDirty = false;
+let pendingReload = false;
 
 const VIEWS = { home:'vHome', form:'vForm', detail:'vDetail', settings:'vSettings', clients:'vClients', agenda:'vAgenda' };
 function navigate(view, opts={}) {
+  if(pendingReload && view!=='form' && !formDirty) { window.location.reload(); return; }
   Object.values(VIEWS).forEach(id => { const el=document.getElementById(id); if(el) el.classList.remove('active'); });
   const el=document.getElementById(VIEWS[view]); if(el) el.classList.add('active');
   const backBtn=document.getElementById('backBtn');
@@ -122,7 +144,7 @@ function navigate(view, opts={}) {
   }
 }
 
-function renderHome() { document.getElementById('hdrTitle').textContent='Facturas Pro'; renderStats(); renderDocList(); }
+function renderHome() { document.getElementById('hdrTitle').textContent='Facturas Pro'; renderStats(); renderDateFilterChip(); renderDocList(); }
 
 function renderStats() {
   const docs=loadDocs(); const month=ym();
@@ -136,11 +158,76 @@ function renderStats() {
 }
 function ym_of(dateStr) { if(!dateStr) return ''; const [y,m]=dateStr.split('-'); return `${y}-${m}`; }
 
+function docsInRange(docs) {
+  if(!state.dateFrom && !state.dateTo) return docs;
+  return docs.filter(d=>{
+    if(state.dateFrom && d.fecha<state.dateFrom) return false;
+    if(state.dateTo && d.fecha>state.dateTo) return false;
+    return true;
+  });
+}
+
+function capitalize(s) { return s.charAt(0).toUpperCase()+s.slice(1); }
+
+function describeDateRange(from,to) {
+  if(from && to) {
+    const f=new Date(from+'T00:00:00');
+    const lastDay=new Date(f.getFullYear(),f.getMonth()+1,0).getDate();
+    const isFullMonth=from.endsWith('-01') && to===`${from.slice(0,7)}-${String(lastDay).padStart(2,'0')}`;
+    if(isFullMonth) return capitalize(f.toLocaleDateString('es-ES',{month:'long',year:'numeric'}));
+    return `${fmtDate(from)} – ${fmtDate(to)}`;
+  }
+  return from?`Desde ${fmtDate(from)}`:`Hasta ${fmtDate(to)}`;
+}
+
+function renderDateFilterChip() {
+  const chip=document.getElementById('filterChip');
+  const btn=document.getElementById('dateFilterBtn');
+  if(!state.dateFrom && !state.dateTo) { chip.classList.add('hidden'); chip.innerHTML=''; btn.classList.remove('active'); return; }
+  btn.classList.add('active');
+  chip.innerHTML=`<span>${describeDateRange(state.dateFrom,state.dateTo)}</span><button type="button" id="filterChipClear" aria-label="Quitar filtro">✕</button>`;
+  chip.classList.remove('hidden');
+  document.getElementById('filterChipClear').addEventListener('click',clearDateFilter);
+}
+
+function clearDateFilter() { state.dateFrom=null; state.dateTo=null; renderDateFilterChip(); renderDocList(); }
+
+function openDateFilterModal() {
+  document.getElementById('fd-month').value='';
+  document.getElementById('fd-desde').value=state.dateFrom||'';
+  document.getElementById('fd-hasta').value=state.dateTo||'';
+  showOverlay('mDateFilter');
+}
+
+function applyMonthToRange(monthVal) {
+  if(!monthVal) return;
+  const [y,m]=monthVal.split('-').map(Number);
+  const lastDay=new Date(y,m,0).getDate();
+  document.getElementById('fd-desde').value=`${y}-${String(m).padStart(2,'0')}-01`;
+  document.getElementById('fd-hasta').value=`${y}-${String(m).padStart(2,'0')}-${String(lastDay).padStart(2,'0')}`;
+}
+
+function applyDateFilter() {
+  const desde=document.getElementById('fd-desde').value;
+  const hasta=document.getElementById('fd-hasta').value;
+  state.dateFrom=desde||null; state.dateTo=hasta||null;
+  hideOverlay('mDateFilter'); renderDateFilterChip(); renderDocList();
+}
+
+function renderListSummary(docs) {
+  const el=document.getElementById('listSummary');
+  if(!state.dateFrom && !state.dateTo) { el.classList.add('hidden'); el.innerHTML=''; return; }
+  const total=docs.reduce((s,d)=>s+d.total,0);
+  el.innerHTML=`<b>${docs.length}</b> ${docs.length===1?'documento':'documentos'} · <b>${fmt(total)}</b>`;
+  el.classList.remove('hidden');
+}
+
 function renderDocList() {
-  const docs=loadDocs().filter(d=>d.tipo===state.tab.slice(0,-1));
+  const docs=docsInRange(loadDocs().filter(d=>d.tipo===state.tab.slice(0,-1)));
   const docList=document.getElementById('docList');
   const empty=document.getElementById('emptyState');
   document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active',t.dataset.t===state.tab));
+  renderListSummary(docs);
   if(!docs.length) { docList.innerHTML=''; empty.classList.remove('hidden'); return; }
   empty.classList.add('hidden');
   const sorted=[...docs].sort((a,b)=>b.fecha.localeCompare(a.fecha));
@@ -171,6 +258,7 @@ function renderForm(editId) {
   document.getElementById('f-notas').value=doc?.notas||'';
   const tipoActual=editId?(loadDocs().find(d=>d.id===editId)?.tipo||state.tab.slice(0,-1)):state.tab.slice(0,-1);
   document.getElementById('submitBtn').textContent=editId?'Guardar cambios':tipoActual==='factura'?'Guardar factura':'Guardar presupuesto';
+  document.getElementById('f-numero').value=doc?doc.numero:peekNextNum(tipoActual);
   document.querySelectorAll('.iva-btn:not(.irpf-btn)').forEach(b=>b.classList.toggle('active',Number(b.dataset.v)===state.iva));
   document.querySelectorAll('.irpf-btn').forEach(b=>b.classList.toggle('active',Number(b.dataset.v)===state.irpf));
   renderLines();
@@ -561,6 +649,39 @@ function renderCitaClientSuggestions(query) {
   }));
 }
 
+/* ── INSTALACIÓN PWA ── */
+let deferredInstallPrompt = null;
+function isStandaloneMode() { return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone===true; }
+function isIosSafari() { return /iphone|ipad|ipod/i.test(navigator.userAgent) && /safari/i.test(navigator.userAgent) && !/crios|fxios|edgios/i.test(navigator.userAgent); }
+function installDismissedRecently() { const t=Number(localStorage.getItem('fp_install_dismissed')||0); return Date.now()-t < 7*24*60*60*1000; }
+function dismissInstallBanner() { document.getElementById('installBanner').classList.add('hidden'); try{ localStorage.setItem('fp_install_dismissed', String(Date.now())); }catch{} }
+function showInstallBanner(text, showBtn) {
+  if(isStandaloneMode() || installDismissedRecently()) return;
+  document.getElementById('installBannerText').textContent=text;
+  document.getElementById('installBannerBtn').classList.toggle('hidden', !showBtn);
+  document.getElementById('installBanner').classList.remove('hidden');
+}
+async function triggerInstall() {
+  if(!deferredInstallPrompt) return;
+  document.getElementById('installBanner').classList.add('hidden');
+  deferredInstallPrompt.prompt();
+  await deferredInstallPrompt.userChoice;
+  deferredInstallPrompt=null;
+}
+function initInstallPrompt() {
+  window.addEventListener('beforeinstallprompt', e=>{
+    e.preventDefault();
+    deferredInstallPrompt=e;
+    showInstallBanner('Instala la app en tu móvil para acceder más rápido',true);
+  });
+  window.addEventListener('appinstalled', ()=>{
+    document.getElementById('installBanner').classList.add('hidden');
+    deferredInstallPrompt=null;
+    try{ localStorage.removeItem('fp_install_dismissed'); }catch{}
+  });
+  if(isIosSafari() && !isStandaloneMode()) showInstallBanner('Para instalarla: toca Compartir → Añadir a pantalla de inicio',false);
+}
+
 /* ── WHATSAPP ── */
 function formatPhoneWa(tel) {
   let digits=(tel||'').replace(/[^\d+]/g,'');
@@ -708,17 +829,22 @@ function submitForm(e) {
   if(isEdit) {
     const doc=docs.find(d=>d.id===state.editId);
     if(doc){
+      const numero=document.getElementById('f-numero').value.trim()||doc.numero;
       doc.cliente={nombre,nif:document.getElementById('f-cNif').value.trim(),email:document.getElementById('f-cEmail').value.trim(),telefono:document.getElementById('f-cTel').value.trim(),direccion:document.getElementById('f-cDir').value.trim()};
+      doc.numero=numero;
       doc.lineas=validLines; doc.iva=state.iva; doc.irpf=state.irpf; doc.subtotal=subtotal; doc.ivaAmt=ivaAmt; doc.irpfAmt=irpfAmt; doc.total=total;
       doc.fecha=document.getElementById('f-fecha').value; doc.vencimiento=document.getElementById('f-vence').value;
       doc.notas=document.getElementById('f-notas').value.trim();
       upsertClientFromDoc(doc.cliente);
+      commitManualNum(doc.tipo,numero);
     }
     formDirty=false; saveDocs(docs); showToast('Cambios guardados ✓'); navigate('detail',{id:state.editId});
   } else {
     useSlot();
     const tipo=state.tab.slice(0,-1);
-    const doc={id:uid(),tipo,numero:nextNum(tipo),estado:'borrador',
+    const numero=document.getElementById('f-numero').value.trim()||peekNextNum(tipo);
+    commitManualNum(tipo,numero);
+    const doc={id:uid(),tipo,numero,estado:'borrador',
       cliente:{nombre,nif:document.getElementById('f-cNif').value.trim(),email:document.getElementById('f-cEmail').value.trim(),telefono:document.getElementById('f-cTel').value.trim(),direccion:document.getElementById('f-cDir').value.trim()},
       lineas:validLines,iva:state.iva,irpf:state.irpf,subtotal,ivaAmt,irpfAmt,total,
       fecha:document.getElementById('f-fecha').value,vencimiento:document.getElementById('f-vence').value,
@@ -772,6 +898,10 @@ function bindEvents() {
   }));
   document.getElementById('fabBtn').addEventListener('click',()=>{ if(!canCreate()){showOverlay('mUpgrade');return;} navigate('form'); });
   document.querySelectorAll('.tab').forEach(tab=>tab.addEventListener('click',()=>{ state.tab=tab.dataset.t; renderDocList(); }));
+  document.getElementById('dateFilterBtn').addEventListener('click',openDateFilterModal);
+  document.getElementById('fd-month').addEventListener('change',e=>applyMonthToRange(e.target.value));
+  document.getElementById('fdApply').addEventListener('click',applyDateFilter);
+  document.getElementById('fdClear').addEventListener('click',()=>{ clearDateFilter(); hideOverlay('mDateFilter'); });
   document.getElementById('addLineBtn').addEventListener('click',()=>{ lines.push(newLine()); formDirty=true; renderLines(); });
   document.querySelectorAll('.iva-btn:not(.irpf-btn)').forEach(btn=>btn.addEventListener('click',()=>{
     state.iva=Number(btn.dataset.v); formDirty=true;
@@ -811,6 +941,8 @@ function bindEvents() {
     window.open(STRIPE_LINK, '_blank');
   });
   document.getElementById('upgradeClose').addEventListener('click',()=>hideOverlay('mUpgrade'));
+  document.getElementById('installBannerBtn').addEventListener('click',triggerInstall);
+  document.getElementById('installBannerClose').addEventListener('click',dismissInstallBanner);
   document.getElementById('mConfirmNo').addEventListener('click',()=>hideOverlay('mConfirm'));
   document.getElementById('mStatusClose').addEventListener('click',()=>hideOverlay('mStatus'));
   document.querySelectorAll('.overlay').forEach(ov=>ov.addEventListener('click',e=>{ if(e.target===ov&&ov.id!=='onboarding') ov.classList.add('hidden'); }));
@@ -824,7 +956,21 @@ document.addEventListener('DOMContentLoaded',()=>{
     window.history.replaceState({},'',window.location.pathname);
     justActivated=true;
   }
-  if('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(()=>{});
-  bindEvents(); initOnboarding();
+  if('serviceWorker' in navigator) {
+    navigator.serviceWorker.addEventListener('controllerchange', ()=>{
+      try{ localStorage.setItem('fp_just_updated','1'); }catch{}
+      if(formDirty){ pendingReload=true; return; }
+      window.location.reload();
+    });
+    navigator.serviceWorker.register('./sw.js').then(reg=>{
+      document.addEventListener('visibilitychange', ()=>{ if(document.visibilityState==='visible') reg.update().catch(()=>{}); });
+    }).catch(()=>{});
+  }
+  bindEvents(); initOnboarding(); initInstallPrompt();
   if(justActivated) setTimeout(()=>showToast('Plan Pro activado ✓'),400);
+  else {
+    let justUpdated=false;
+    try{ justUpdated=!!localStorage.getItem('fp_just_updated'); localStorage.removeItem('fp_just_updated'); }catch{}
+    if(justUpdated) setTimeout(()=>showToast('App actualizada ✓'),400);
+  }
 });

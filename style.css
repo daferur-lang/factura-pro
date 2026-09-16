@@ -81,7 +81,7 @@ body {
   -webkit-font-smoothing: antialiased;
   padding: 0; margin: 0;
 }
-body > :not(.overlay):not(#shell):not(#toast):not(script) { display: none; }
+body > :not(.overlay):not(#shell):not(#toast):not(#installBanner):not(script) { display: none; }
 
 /* ── OVERLAYS ── */
 .overlay {
@@ -305,6 +305,34 @@ body > :not(.overlay):not(#shell):not(#toast):not(script) { display: none; }
   transition: color .15s, border-color .15s; letter-spacing: .01em;
 }
 .tab.active { color: var(--amber); border-bottom-color: var(--amber); font-weight: 500; }
+.tab-filter-btn {
+  margin-left: auto; align-self: center;
+  width: 30px; height: 30px; display: flex; align-items: center; justify-content: center;
+  border-radius: 50%; color: var(--gray-4);
+  background: transparent; border: 1px solid var(--border-2);
+  cursor: pointer; padding: 0; transition: color .15s, border-color .15s, background .15s;
+}
+.tab-filter-btn:active { background: var(--bg); }
+.tab-filter-btn.active { color: var(--amber); border-color: var(--amber); background: var(--amber-lt); }
+
+/* ── FILTRO DE FECHA (chip + resumen) ── */
+.filter-chip {
+  display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  margin: 10px 16px 0; padding: 7px 12px;
+  background: var(--amber-lt); border: 1px solid var(--gold-lt);
+  border-radius: var(--radius); flex-shrink: 0;
+}
+.filter-chip span { font-size: .8rem; color: var(--amber); font-weight: 500; }
+.filter-chip button {
+  background: none; border: none; color: var(--amber); cursor: pointer;
+  font-size: .9rem; line-height: 1; padding: 2px 4px;
+}
+.list-summary {
+  display: flex; justify-content: center; gap: 6px;
+  padding: 10px 16px; font-size: .82rem; color: var(--gray-3);
+  background: var(--surface); border-bottom: 1px solid var(--border-2); flex-shrink: 0;
+}
+.list-summary b { color: var(--gray-1); font-weight: 600; }
 
 /* ── LISTA DE DOCUMENTOS (estilo libro contable) ── */
 #docList, #clientsList {
@@ -397,6 +425,7 @@ body > :not(.overlay):not(#shell):not(#toast):not(script) { display: none; }
 .modal-card input[type=tel],
 .modal-card input[type=date],
 .modal-card input[type=time],
+.modal-card input[type=month],
 .modal-card textarea {
   background: transparent !important;
   border: none !important;
@@ -676,6 +705,30 @@ button.danger {
   letter-spacing: .02em;
 }
 .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+/* ── AVISO PWA (instalar) ── */
+.pwa-banner {
+  position: fixed; left: 12px; right: 12px;
+  bottom: calc(var(--nav-h) + 12px + env(safe-area-inset-bottom, 0px));
+  background: var(--hdr); color: #F0E8DE;
+  border: 1px solid var(--gold); border-radius: var(--radius);
+  padding: 10px 10px 10px 14px;
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  font-family: var(--sans); font-size: .82rem; font-weight: 300;
+  box-shadow: var(--shadow-md); z-index: 150;
+}
+.pwa-banner.hidden { display: none; }
+.pwa-banner-actions { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+.pwa-banner button {
+  background: var(--gold); color: var(--hdr); border: none;
+  border-radius: var(--radius-sm); padding: 7px 14px; margin: 0;
+  font-family: var(--sans); font-size: .78rem; font-weight: 600;
+  cursor: pointer; white-space: nowrap;
+}
+.pwa-banner-close {
+  background: transparent !important; color: #F0E8DE !important;
+  padding: 4px 6px !important; font-size: .9rem !important; line-height: 1;
+}
 
 /* ── MARCA DE AGUA ── */
 .watermark-badge {
